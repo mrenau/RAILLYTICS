@@ -8,6 +8,7 @@ from pathlib import Path
 from airflow.sdk import dag, task
 from airflow.sdk.exceptions import AirflowSkipException
 
+from raillytics.ingesta.airflow_ref import referencia_airflow
 from raillytics.ingesta.download import download
 from raillytics.ingesta.sources import load_sources
 
@@ -32,7 +33,7 @@ BRONZE_REJECTED_ROOT = Path("/opt/airflow/raillytics_data/bronze_rejected")
 )
 def ingesta_data_sources():
     @task
-    def download_source(source_id: str) -> str:
+    def download_source(source_id: str, **contexto) -> str:
         # Imports dentro de la tarea: el dag-processor no necesita duckdb para parsear el DAG.
         from raillytics.calidad import QualityGateError, registrar_calidad
         from raillytics.utils.cargas import registrar_carga
@@ -42,7 +43,9 @@ def ingesta_data_sources():
         # Trazabilidad: una fila por descarga en <bucket gold>/_trazabilidad/cargas/ y una
         # por quality gate en .../calidad/, con el mismo run_id (MinIO y credenciales
         # salen de las variables MINIO_* del contenedor).
-        with registrar_carga("bronze_download", "bronze", parametros={"format": source.format}) as ejecucion:
+        # La referencia de Airflow queda en la trazabilidad: el dashboard «Lineage de cargas» enlaza desde ella al log de esta tarea.
+        parametros = {"format": source.format, "airflow": referencia_airflow(contexto)}
+        with registrar_carga("bronze_download", "bronze", parametros=parametros) as ejecucion:
             with ejecucion.tabla(source.id, origen=source.url) as carga:
                 descarga = download(source, BRONZE_STAGING_ROOT, BRONZE_REJECTED_ROOT)
                 carga.destino = str(descarga.path)

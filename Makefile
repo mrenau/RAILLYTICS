@@ -10,7 +10,7 @@
 #       make <target>
 
 .DEFAULT_GOAL := help
-.PHONY: help up down install-dev-env install-hooks test test-python test-scala 00_ingest 01_raw-uploader 02_parquet-converter 03_silver-sample 04_silver 05_gold 06_superset-import 07_prediccion prediccion-sample llm-up llm-down quality-gates carga-e2e cargas calidad clean
+.PHONY: help up down install-dev-env install-hooks test test-python test-scala 00_ingest 01_raw-uploader 02_parquet-converter 03_silver-sample 04_silver 05_gold 06_superset-import 07_prediccion prediccion-sample llm-up llm-down quality-gates carga-e2e lineage cargas calidad clean
 
 # .env está en formato KEY=value, que es sintaxis de Makefile válida — así no
 # hace falta `source .env` (no funciona igual en Windows) y las variables se
@@ -79,6 +79,7 @@ help:
 	@echo "                     (make quality-gates QG_ARGS=silver | gold | <tabla> para acotar)"
 	@echo "  carga-e2e          Carga end-to-end: sube el stack, descarga, L1, L2, Silver, Gold y predicción, parando cada stream al acabar"
 	@echo "                     (TRIMESTRE=2026-T4 fija el trimestre a predecir; E2E_ARGS=\"--sin-prediccion\" o \"--desde silver\" para acotar)"
+	@echo "  lineage            Regenera los datasets del dashboard de lineage desde el repo (luego: make 06_superset-import)"
 	@echo "  cargas             Muestra las últimas cargas registradas (trazabilidad del lake)"
 	@echo "  calidad            Muestra los últimos resultados de quality gates registrados"
 	@echo "  clean              Borra directorios de staging/checkpoints generados"
@@ -207,6 +208,12 @@ E2E_ARGS ?=
 E2E_MAKE := $(MAKE)
 carga-e2e: $(VENV)/.deps-installed
 	$(VENV_PY) scripts/carga_e2e.py --make "$(E2E_MAKE)" --compose "$(COMPOSE)" $(if $(TRIMESTRE),--trimestre $(TRIMESTRE)) $(E2E_ARGS)
+
+# Dashboard «Lineage de cargas»: sus datasets se GENERAN del repositorio (fuentes, SQL de Silver y Gold, gates, predicción y dashboards),
+# así que al cambiar cualquiera de ellos hay que regenerarlos; un test comprueba que lo versionado está al día.
+# AIRFLOW_UI_URL (en el .env) fija la dirección de Airflow que usan los enlaces a los logs (por defecto http://localhost:8080).
+lineage: $(VENV)/.deps-installed
+	$(VENV_PY) -m raillytics.lineage
 
 cargas: $(VENV)/.deps-installed
 	$(VENV_PY) -m raillytics.utils.cargas

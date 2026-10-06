@@ -1,0 +1,24 @@
+slice_name: Nodos del grafo
+description: Fuentes, ficheros y tablas de cada capa, predicción, datasets y dashboards.
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  adhoc_filters: []
+  metric: n_nodos
+  header_font_size: 0.4
+  subheader: ''
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  force_timestamp_formatting: false
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: a913a93a-c409-5291-8c06-1c63e6101052
+version: 1.0.0
+dataset_uuid: a463e9cc-8283-5f2d-801f-475d1f3fc80d
+is_managed_externally: false
+external_url: null

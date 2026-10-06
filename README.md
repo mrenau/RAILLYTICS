@@ -129,7 +129,7 @@ RAILLYTICS/
 │   └── ingesta_data_sources.py # DAG Airflow: descarga por fuente (dynamic task mapping sobre el YAML)
 │
 ├── dashboards/
-│   └── superset/raillytics_gold/  # Dashboards de Superset como código (Demanda, Puntualidad, Trazabilidad de cargas, Predicción de demanda); se importan al arrancar
+│   └── superset/raillytics_gold/  # Dashboards de Superset como código (Demanda, Puntualidad, Trazabilidad de cargas, Lineage de cargas, Predicción de demanda); se importan al arrancar
 │
 ├── data/                       # Data Lake local — NO se versiona en git
 │   ├── bronze/                 # Staging local por fuente — aquí escribe la descarga Python
@@ -522,6 +522,37 @@ del registro (por defecto, dentro del bucket Gold).
 
 Junto a `cargas/` vive `_trazabilidad/calidad/`, con una fila por quality gate evaluado y el
 **mismo `run_id`** que la carga a la que pertenece (ver [Quality Gates](#quality-gates)).
+
+### Lineage de cargas (dashboard en forma de grafo)
+
+El dashboard *Lineage de cargas* (`/superset/dashboard/lineage-cargas/`) dibuja el recorrido de los datos **de la fuente al dashboard**:
+fuente → staging → Bronze L1 → L2 → Silver → Gold → dataset → dashboard, más los generadores sintéticos y la predicción con su LLM. Tiene un
+**Sankey** (flujo de izquierda a derecha, grosor según las filas de la última carga) y un **grafo** de fuerzas (un color por capa, nodos
+arrastrables, leyenda para ocultar capas); cada salto lleva su proceso y su transformación (`silver/<tabla>.sql`, `gold/<tabla>.sql`, la descarga
+del DAG, la copia a MinIO…). Debajo, el estado de cada nodo, las **reglas de calidad** con su último resultado y las **ejecuciones con su error y
+un enlace al log de la tarea de Airflow** (solo las descargas pasan por Airflow). El filtro *Ejecución* hace **zoom por carga**: un grafo con solo los
+saltos de los `run_id` elegidos.
+
+Dos capas de información, que se cruzan en el SQL de los datasets:
+
+- **Declarada** (qué debería existir): se **genera del repositorio** (`raillytics.lineage.grafo`): `config/data_sources.yml`, la clave `silver:` de
+  cada fuente y su SQL, las tablas `silver_*`/`gold_*` que cita cada `src/main/resources/gold/*.sql` (la trazabilidad solo guarda
+  `origen = s3a://raillytics-silver`, sin decir de qué tablas), `config/prediccion.yml`, `config/quality_gates.yml` y los datasets y dashboards de
+  `dashboards/superset/`. Un nodo declarado que nunca se ha ejecutado figura como **sin ejecutar**.
+- **Observada** (qué se cargó): `_trazabilidad/cargas/` y `_trazabilidad/calidad/`. Cada app registra sus tablas a su manera (`crtm/stops`,
+  `silver_cnmc_trimestral`…) y `raillytics.lineage.datasets` las lleva al nodo que les corresponde.
+
+Estado de un nodo: **error** si su última carga falló o falla un gate bloqueante, **aviso** si solo falla un gate de aviso, **ok**, **sin ejecutar**
+o **no aplica** (fuentes, datasets y dashboards no se cargan).
+
+```bash
+make lineage                 # regenera los datasets lineage_*.yaml desde el repo (hazlo al cambiar fuentes, SQL, gates o dashboards)
+make 06_superset-import      # y reimporta el dashboard
+```
+
+Un test (`tests/lineage/test_sincronia.py`) falla si los YAML versionados no coinciden con lo que generaría `make lineage`. Los enlaces al log usan
+`http://localhost:8080` (la UI de Airflow del compose); `AIRFLOW_UI_URL` en el `.env` lo cambia. Para esos enlaces la descarga guarda su
+referencia de Airflow (`dag_id`, `run_id`, `task_id`, `map_index`) en `parametros.airflow` de su fila de trazabilidad.
 
 ---
 

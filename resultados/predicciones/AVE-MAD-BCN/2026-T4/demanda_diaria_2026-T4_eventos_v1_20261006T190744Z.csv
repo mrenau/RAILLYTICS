@@ -1,0 +1,93 @@
+fecha,corredor,viajeros_previstos,indice,motivo,trimestre,modelo,version_prompt,run_id,generado_en
+2026-10-01,AVE-MAD-BCN,31488,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-02,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-03,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-04,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-05,AVE-MAD-BCN,31488,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-06,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-07,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-08,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-09,AVE-MAD-BCN,42937,1.365323,viernes víspera de tramo festivo,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-10,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-11,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-12,AVE-MAD-BCN,25763,0.819194,"lunes festivo (Fiesta Nacional de España), regreso de tramo festivo",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-13,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-14,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-15,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-16,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-17,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-18,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-19,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-20,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-21,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-22,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-23,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-24,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-25,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-26,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-27,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-28,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-29,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-30,AVE-MAD-BCN,42937,1.365323,viernes víspera de tramo festivo,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-10-31,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-01,AVE-MAD-BCN,41506,1.319812,"domingo festivo (Todos los Santos), regreso de tramo festivo",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-02,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-03,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-04,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-05,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-06,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-07,AVE-MAD-BCN,25763,0.819194,"sábado de fin de semana, junto a un evento",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-08,AVE-MAD-BCN,44726,1.422211,domingo con concierto grande en Madrid: atrae aficionados · domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-09,AVE-MAD-BCN,32919,1.046747,"lunes laborable, junto a un evento",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-10,AVE-MAD-BCN,30056,0.955726,"martes laborable, junto a un evento",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-11,AVE-MAD-BCN,37212,1.183280,miércoles con partido de liga Real Madrid - FC Barcelona en Madrid: atrae aficionados · miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-12,AVE-MAD-BCN,32919,1.046747,"jueves laborable, junto a un evento",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-13,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-14,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-15,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-16,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-17,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-18,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-19,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-20,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-21,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-22,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-23,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-24,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-25,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-26,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-27,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-28,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-29,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-11-30,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-01,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-02,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-03,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-04,AVE-MAD-BCN,42937,1.365323,viernes víspera de tramo festivo,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-05,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-06,AVE-MAD-BCN,35781,1.137769,domingo festivo (Día de la Constitución),2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-07,AVE-MAD-BCN,21469,0.682661,lunes puente,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-08,AVE-MAD-BCN,25763,0.819194,"martes festivo (Inmaculada Concepción), regreso de tramo festivo",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-09,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-10,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-11,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-12,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-13,AVE-MAD-BCN,35781,1.137769,domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-14,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-15,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-16,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-17,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-18,AVE-MAD-BCN,37212,1.183280,viernes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-19,AVE-MAD-BCN,25763,0.819194,"sábado de fin de semana, junto a un evento",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-20,AVE-MAD-BCN,44726,1.422211,domingo con concierto grande en Madrid: atrae aficionados · domingo de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-21,AVE-MAD-BCN,32919,1.046747,"lunes laborable, junto a un evento",2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-22,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-23,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-24,AVE-MAD-BCN,37212,1.183280,jueves víspera de tramo festivo,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-25,AVE-MAD-BCN,20038,0.637151,viernes festivo (Natividad del Señor),2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-26,AVE-MAD-BCN,24331,0.773683,sábado de fin de semana,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-27,AVE-MAD-BCN,41506,1.319812,domingo regreso de tramo festivo,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-28,AVE-MAD-BCN,31487,1.001237,lunes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-29,AVE-MAD-BCN,28625,0.910215,martes laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-30,AVE-MAD-BCN,28625,0.910215,miércoles laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z
+2026-12-31,AVE-MAD-BCN,31487,1.001237,jueves laborable,2026-T4,mistral-nemo,eventos_v1,20261006T190744-prediccion_demanda-0861c1,2026-10-06T19:07:44Z

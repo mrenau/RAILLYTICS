@@ -1,0 +1,365 @@
+table_name: lineage_aristas
+main_dttm_col: ultima_carga
+description: 'Mapa global del lineage: un salto entre nodos por fila, con el estado de la última carga de su destino.'
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: null
+catalog: null
+sql: |-
+  -- Lineage · un salto por fila: de qué nodo a cuál, con qué proceso y transformación, y el estado de la última carga de su destino.
+  -- Se genera con `make lineage` (raillytics.lineage): no lo edites a mano.
+  WITH nodos(nodo, capa, orden_capa, nombre, descripcion, ruta, trazable) AS (VALUES
+      ('fuente:cnmc_indicadores', 'Fuente', 0, 'cnmc_indicadores', 'CNMC - Indicadores trimestrales del transporte ferroviario de viajeros (viajeros, plazas, tren·km, ingresos por corredor y empresa)', 'https://catalogodatos.cnmc.es/dataset/e608b7b2-0b3a-4816-a4f2-54eb3d913790/resource/611667a1-b294-45e3-9283-6e49ea2f9bbc/download/ds_24406_1.csv', false),
+      ('fuente:cnmc_precio_mensual', 'Fuente', 0, 'cnmc_precio_mensual', 'CNMC - Indicador del precio medio mensual por trayecto', 'https://catalogodatos.cnmc.es/dataset/e880b3ca-6b78-4b84-ad93-6e645e6938d0/resource/de217355-6f5d-48f6-8c72-31cd86eefe00/download/ds_24410_1.csv', false),
+      ('fuente:cnmc_precio_trimestral', 'Fuente', 0, 'cnmc_precio_trimestral', 'CNMC - Indicador del precio medio trimestral por trayecto', 'https://catalogodatos.cnmc.es/dataset/ed44fc19-79d5-4222-b724-81e430c29a36/resource/97a05b72-874d-493f-88d8-90b850dcdc66/download/ds_24409_1.csv', false),
+      ('fuente:cnmc_viajeros_corredor', 'Fuente', 0, 'cnmc_viajeros_corredor', 'CNMC - Viajeros y plazas trimestrales de larga distancia alta velocidad por corredor y empresa', 'https://catalogodatos.cnmc.es/dataset/361af21a-b03a-4194-ae58-449a49456b1a/resource/1005487a-3c01-4807-bff7-dceb2a5d6bfc/download/ds_24408_1.csv', false),
+      ('fuente:cnmc_viajeros_producto', 'Fuente', 0, 'cnmc_viajeros_producto', 'CNMC - Viajeros y plazas trimestrales por tipo de producto (Cercanías, MD y LD; total nacional)', 'https://catalogodatos.cnmc.es/dataset/1e30c002-296b-43ac-a543-83a2409ca2c0/resource/10834ee7-55ea-466d-8d42-ce2f109c785d/download/ds_24407_1.csv', false),
+      ('fuente:crtm', 'Fuente', 0, 'crtm', 'CRTM - Consorcio Regional de Transportes de Madrid (GTFS estático)', 'https://crtm.maps.arcgis.com/sharing/rest/content/items/1a25440bf66f499bae2657ec7fb40144/data', false),
+      ('fuente:renfe_trip_updates', 'Fuente', 0, 'renfe_trip_updates', 'Renfe GTFS-RT - Actualizaciones de viaje (Larga Distancia)', 'https://gtfsrt.renfe.com/trip_updates_LD.json', false),
+      ('fuente:renfe_vehicle_positions', 'Fuente', 0, 'renfe_vehicle_positions', 'Renfe GTFS-RT - Posiciones de vehículos (Larga Distancia)', 'https://gtfsrt.renfe.com/vehicle_positions_LD.json', false),
+      ('gen:muestra_prediccion', 'Generador sintético', 0, 'muestra_prediccion', 'Festivos, eventos, meteo y demanda sintéticos para la predicción', '', false),
+      ('gen:silver_sample', 'Generador sintético', 0, 'silver_sample', 'Silver sintético y determinista del corredor (no son datos reales)', '', false),
+      ('modelo:ollama', 'Modelo LLM', 0, 'ollama', 'LLM local (Ollama) que reparte el total del trimestre entre los días', '', false),
+      ('staging:cnmc_indicadores', 'Staging', 1, 'cnmc_indicadores', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:cnmc_precio_mensual', 'Staging', 1, 'cnmc_precio_mensual', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:cnmc_precio_trimestral', 'Staging', 1, 'cnmc_precio_trimestral', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:cnmc_viajeros_corredor', 'Staging', 1, 'cnmc_viajeros_corredor', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:cnmc_viajeros_producto', 'Staging', 1, 'cnmc_viajeros_producto', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:crtm', 'Staging', 1, 'crtm', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:renfe_trip_updates', 'Staging', 1, 'renfe_trip_updates', 'Fichero descargado, a la espera de L1', '', true),
+      ('staging:renfe_vehicle_positions', 'Staging', 1, 'renfe_vehicle_positions', 'Fichero descargado, a la espera de L1', '', true),
+      ('l1:cnmc_indicadores', 'Bronze L1', 2, 'cnmc_indicadores', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:cnmc_precio_mensual', 'Bronze L1', 2, 'cnmc_precio_mensual', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:cnmc_precio_trimestral', 'Bronze L1', 2, 'cnmc_precio_trimestral', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:cnmc_viajeros_corredor', 'Bronze L1', 2, 'cnmc_viajeros_corredor', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:cnmc_viajeros_producto', 'Bronze L1', 2, 'cnmc_viajeros_producto', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:crtm', 'Bronze L1', 2, 'crtm', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:renfe_trip_updates', 'Bronze L1', 2, 'renfe_trip_updates', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l1:renfe_vehicle_positions', 'Bronze L1', 2, 'renfe_vehicle_positions', 'Copia literal en MinIO (l1-raw)', '', true),
+      ('l2:cnmc_indicadores', 'Bronze L2', 3, 'cnmc_indicadores', 'Parquet en MinIO (l2)', '', true),
+      ('l2:cnmc_precio_mensual', 'Bronze L2', 3, 'cnmc_precio_mensual', 'Parquet en MinIO (l2)', '', true),
+      ('l2:cnmc_precio_trimestral', 'Bronze L2', 3, 'cnmc_precio_trimestral', 'Parquet en MinIO (l2)', '', true),
+      ('l2:cnmc_viajeros_corredor', 'Bronze L2', 3, 'cnmc_viajeros_corredor', 'Parquet en MinIO (l2)', '', true),
+      ('l2:cnmc_viajeros_producto', 'Bronze L2', 3, 'cnmc_viajeros_producto', 'Parquet en MinIO (l2)', '', true),
+      ('l2:crtm', 'Bronze L2', 3, 'crtm', 'Parquet en MinIO (l2)', '', true),
+      ('l2:muestra_aemet', 'Bronze L2', 3, 'muestra_aemet', 'Muestra sintética en Bronze L2', '', true),
+      ('l2:muestra_demanda_trimestral', 'Bronze L2', 3, 'muestra_demanda_trimestral', 'Muestra sintética en Bronze L2', '', true),
+      ('l2:muestra_eventos', 'Bronze L2', 3, 'muestra_eventos', 'Muestra sintética en Bronze L2', '', true),
+      ('l2:muestra_festivos', 'Bronze L2', 3, 'muestra_festivos', 'Muestra sintética en Bronze L2', '', true),
+      ('l2:renfe_trip_updates', 'Bronze L2', 3, 'renfe_trip_updates', 'Parquet en MinIO (l2)', '', true),
+      ('l2:renfe_vehicle_positions', 'Bronze L2', 3, 'renfe_vehicle_positions', 'Parquet en MinIO (l2)', '', true),
+      ('silver:cnmc_precio_mensual', 'Silver', 4, 'cnmc_precio_mensual', 'Silver cnmc_precio_mensual: precio medio mensual por trayecto y empresa de la CNMC (LD AV, servicio comercial).', 'src/main/resources/silver/cnmc_precio_mensual.sql', true),
+      ('silver:cnmc_precio_trimestral', 'Silver', 4, 'cnmc_precio_trimestral', 'Silver cnmc_precio_trimestral: precio medio trimestral por trayecto y empresa de la CNMC (LD AV, servicio comercial).', 'src/main/resources/silver/cnmc_precio_trimestral.sql', true),
+      ('silver:cnmc_trimestral', 'Silver', 4, 'cnmc_trimestral', 'Silver cnmc_trimestral: indicadores trimestrales del transporte ferroviario de viajeros de la CNMC (LD AV, servicio comercial).', 'src/main/resources/silver/cnmc_trimestral.sql', true),
+      ('silver:cnmc_viajeros_corredor', 'Silver', 4, 'cnmc_viajeros_corredor', 'Silver cnmc_viajeros_corredor: viajeros y plazas ofertadas trimestrales de larga distancia alta velocidad por corredor y', 'src/main/resources/silver/cnmc_viajeros_corredor.sql', true),
+      ('silver:cnmc_viajeros_producto', 'Silver', 4, 'cnmc_viajeros_producto', 'Silver cnmc_viajeros_producto: viajeros y plazas ofertadas trimestrales por tipo de producto de la CNMC (Cercanías, Media', 'src/main/resources/silver/cnmc_viajeros_producto.sql', true),
+      ('silver:puntualidad_enriquecida', 'Silver', 4, 'puntualidad_enriquecida', '', '', true),
+      ('silver:viajeros_enriquecidos', 'Silver', 4, 'viajeros_enriquecidos', '', '', true),
+      ('pred:prediccion_demanda_ave_mad_bcn', 'Predicción', 5, 'prediccion_demanda_ave_mad_bcn', 'Predicción diaria de demanda del corredor (CSV versionado)', '', true),
+      ('gold:dim_estacion', 'Gold', 6, 'dim_estacion', 'Dim_Estacion: catálogo de estaciones con los atributos', 'src/main/resources/gold/dim_estacion.sql', true),
+      ('gold:dim_fecha', 'Gold', 6, 'dim_fecha', 'Dim_Fecha: una fila por día presente en Silver (viajeros o puntualidad); fecha_id', 'src/main/resources/gold/dim_fecha.sql', true),
+      ('gold:dim_linea', 'Gold', 6, 'dim_linea', 'Dim_Linea: catálogo de líneas (tipo de tren, origen y destino).', 'src/main/resources/gold/dim_linea.sql', true),
+      ('gold:dim_operador', 'Gold', 6, 'dim_operador', 'Dim_Operador: catálogo de operadores del corredor (empresa y segmento: alta velocidad o low cost).', 'src/main/resources/gold/dim_operador.sql', true),
+      ('gold:fact_mercado_trimestral', 'Gold', 6, 'fact_mercado_trimestral', 'Fact_Mercado_Trimestral: demanda, oferta e ingresos trimestrales del corredor AVE Madrid–Barcelona por operador (CNMC, datos reales).', 'src/main/resources/gold/fact_mercado_trimestral.sql', true),
+      ('gold:fact_precio_mensual', 'Gold', 6, 'fact_precio_mensual', 'Fact_Precio_Mensual: precio medio por trayecto del corredor AVE Madrid–Barcelona por operador y mes (CNMC, datos reales).', 'src/main/resources/gold/fact_precio_mensual.sql', true),
+      ('gold:fact_precio_trimestral', 'Gold', 6, 'fact_precio_trimestral', 'Fact_Precio_Trimestral: precio medio por trayecto del corredor AVE Madrid–Barcelona por operador y trimestre (CNMC, datos reales).', 'src/main/resources/gold/fact_precio_trimestral.sql', true),
+      ('gold:fact_prediccion_demanda', 'Gold', 6, 'fact_prediccion_demanda', 'Predicción publicada en Gold para el dashboard', '', true),
+      ('gold:fact_puntualidad', 'Gold', 6, 'fact_puntualidad', 'Fact_Puntualidad: un servicio (tren) por fila con su', 'src/main/resources/gold/fact_puntualidad.sql', true),
+      ('gold:fact_viajeros', 'Gold', 6, 'fact_viajeros', 'Fact_Viajeros: viajeros diarios por estación, línea y operador.', 'src/main/resources/gold/fact_viajeros.sql', true),
+      ('dataset:backtest_nivel', 'Dataset de Superset', 7, 'backtest_nivel', 'Backtest de la regla de nivel de la predicción con los trimestres reales de la CNMC. Datos REALES de la CNMC (no sintéticos), solo el corredor AVE Madrid–Barcelona. En la demanda Avlo va dentro de Renfe (la CNMC no la separa); en los precios aparece por separado hasta 2025-T4. «Viajeros por plaza ofertada» no es ocupación: un asiento sirve a varios tramos.', '', false),
+      ('dataset:mercado_trimestral', 'Dataset de Superset', 7, 'mercado_trimestral', 'Mercado trimestral del corredor AVE Madrid–Barcelona por operador. Datos REALES de la CNMC (no sintéticos), solo el corredor AVE Madrid–Barcelona. En la demanda Avlo va dentro de Renfe (la CNMC no la separa); en los precios aparece por separado hasta 2025-T4. «Viajeros por plaza ofertada» no es ocupación: un asiento sirve a varios tramos.', '', false),
+      ('dataset:precio_medio_mensual', 'Dataset de Superset', 7, 'precio_medio_mensual', 'Precio medio mensual por trayecto del corredor AVE Madrid–Barcelona por operador. Datos REALES de la CNMC (no sintéticos), solo el corredor AVE Madrid–Barcelona. En la demanda Avlo va dentro de Renfe (la CNMC no la separa); en los precios aparece por separado hasta 2025-T4. «Viajeros por plaza ofertada» no es ocupación: un asiento sirve a varios tramos.', '', false),
+      ('dataset:precio_medio_trimestral', 'Dataset de Superset', 7, 'precio_medio_trimestral', 'Precio medio trimestral por trayecto del corredor AVE Madrid–Barcelona por operador. Datos REALES de la CNMC (no sintéticos), solo el corredor AVE Madrid–Barcelona. En la demanda Avlo va dentro de Renfe (la CNMC no la separa); en los precios aparece por separado hasta 2025-T4. «Viajeros por plaza ofertada» no es ocupación: un asiento sirve a varios tramos.', '', false),
+      ('dataset:prediccion_demanda', 'Dataset de Superset', 7, 'prediccion_demanda', 'Predicción diaria de demanda del corredor AVE Madrid–Barcelona (raillytics.prediccion): una fila por día y ejecución, leída de s3://raillytics-gold/fact_prediccion_demanda/.', '', false),
+      ('dataset:puntualidad_servicios', 'Dataset de Superset', 7, 'puntualidad_servicios', 'Un servicio (tren) del corredor AVE Madrid–Barcelona (línea AVE-MAD-BCN) por fila con su operador y su retraso en llegada: Fact_Puntualidad ⋈ dimensiones, leído con DuckDB del Parquet de Gold en MinIO. Solo se muestra el corredor.', '', false),
+      ('dataset:viajeros_diarios', 'Dataset de Superset', 7, 'viajeros_diarios', 'Viajeros diarios del corredor AVE Madrid–Barcelona (línea AVE-MAD-BCN) por estación y operador: Fact_Viajeros ⋈ Dim_Fecha, Dim_Estacion, Dim_Linea y Dim_Operador, leídos con DuckDB del Parquet de Gold en MinIO. Solo se muestra el corredor.', '', false),
+      ('dashboard:demanda-ferroviaria', 'Dashboard', 8, 'demanda-ferroviaria', 'Demanda ferroviaria · AVE Madrid–Barcelona', '', false),
+      ('dashboard:mercado-corredor', 'Dashboard', 8, 'mercado-corredor', 'Mercado del corredor · AVE Madrid–Barcelona', '', false),
+      ('dashboard:prediccion-demanda', 'Dashboard', 8, 'prediccion-demanda', 'Predicción de demanda · AVE Madrid–Barcelona', '', false),
+      ('dashboard:puntualidad', 'Dashboard', 8, 'puntualidad', 'Puntualidad · AVE Madrid–Barcelona', '', false)),
+  aristas(origen, destino, proceso, transformacion, ruta) AS (VALUES
+      ('dataset:backtest_nivel', 'dashboard:mercado-corredor', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('dataset:mercado_trimestral', 'dashboard:mercado-corredor', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('dataset:precio_medio_mensual', 'dashboard:mercado-corredor', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('dataset:precio_medio_trimestral', 'dashboard:mercado-corredor', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('dataset:prediccion_demanda', 'dashboard:prediccion-demanda', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('dataset:puntualidad_servicios', 'dashboard:puntualidad', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('dataset:viajeros_diarios', 'dashboard:demanda-ferroviaria', 'superset', 'Gráficos del dashboard sobre el dataset', ''),
+      ('fuente:cnmc_indicadores', 'staging:cnmc_indicadores', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:cnmc_precio_mensual', 'staging:cnmc_precio_mensual', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:cnmc_precio_trimestral', 'staging:cnmc_precio_trimestral', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:cnmc_viajeros_corredor', 'staging:cnmc_viajeros_corredor', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:cnmc_viajeros_producto', 'staging:cnmc_viajeros_producto', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:crtm', 'staging:crtm', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:renfe_trip_updates', 'staging:renfe_trip_updates', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('fuente:renfe_vehicle_positions', 'staging:renfe_vehicle_positions', 'bronze_download', 'Descarga HTTP del DAG ingesta_data_sources (Airflow) con quality gates de fichero', ''),
+      ('gen:muestra_prediccion', 'l2:muestra_aemet', 'prediccion_muestra', 'Generador determinista (python -m raillytics.prediccion.muestra)', ''),
+      ('gen:muestra_prediccion', 'l2:muestra_demanda_trimestral', 'prediccion_muestra', 'Generador determinista (python -m raillytics.prediccion.muestra)', ''),
+      ('gen:muestra_prediccion', 'l2:muestra_eventos', 'prediccion_muestra', 'Generador determinista (python -m raillytics.prediccion.muestra)', ''),
+      ('gen:muestra_prediccion', 'l2:muestra_festivos', 'prediccion_muestra', 'Generador determinista (python -m raillytics.prediccion.muestra)', ''),
+      ('gen:silver_sample', 'silver:puntualidad_enriquecida', 'silver_sample', 'Generador determinista (python -m raillytics.procesamiento.silver_sample)', ''),
+      ('gen:silver_sample', 'silver:viajeros_enriquecidos', 'silver_sample', 'Generador determinista (python -m raillytics.procesamiento.silver_sample)', ''),
+      ('gold:dim_estacion', 'dataset:puntualidad_servicios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_estacion', 'dataset:viajeros_diarios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_fecha', 'dataset:puntualidad_servicios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_fecha', 'dataset:viajeros_diarios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_linea', 'dataset:puntualidad_servicios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_linea', 'dataset:viajeros_diarios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_operador', 'dataset:mercado_trimestral', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_operador', 'dataset:precio_medio_mensual', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_operador', 'dataset:precio_medio_trimestral', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_operador', 'dataset:puntualidad_servicios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:dim_operador', 'dataset:viajeros_diarios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_mercado_trimestral', 'dataset:backtest_nivel', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_mercado_trimestral', 'dataset:mercado_trimestral', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_precio_mensual', 'dataset:precio_medio_mensual', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_precio_trimestral', 'dataset:precio_medio_trimestral', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_prediccion_demanda', 'dataset:prediccion_demanda', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_puntualidad', 'dataset:puntualidad_servicios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('gold:fact_viajeros', 'dataset:viajeros_diarios', 'superset', 'SQL del dataset (DuckDB sobre el Parquet de Gold)', ''),
+      ('l1:cnmc_indicadores', 'l2:cnmc_indicadores', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:cnmc_precio_mensual', 'l2:cnmc_precio_mensual', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:cnmc_precio_trimestral', 'l2:cnmc_precio_trimestral', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:cnmc_viajeros_corredor', 'l2:cnmc_viajeros_corredor', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:cnmc_viajeros_producto', 'l2:cnmc_viajeros_producto', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:crtm', 'l2:crtm', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:renfe_trip_updates', 'l2:renfe_trip_updates', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l1:renfe_vehicle_positions', 'l2:renfe_vehicle_positions', 'bronze_l2_parquet_converter', 'CSV, JSON o ZIP a Parquet (Spark Streaming · ParquetConverter)', ''),
+      ('l2:cnmc_indicadores', 'silver:cnmc_trimestral', 'silver_builder', 'silver/cnmc_trimestral.sql (snapshot) · Spark Structured Streaming · SilverBuilder', 'src/main/resources/silver/cnmc_trimestral.sql'),
+      ('l2:cnmc_precio_mensual', 'silver:cnmc_precio_mensual', 'silver_builder', 'silver/cnmc_precio_mensual.sql (snapshot) · Spark Structured Streaming · SilverBuilder', 'src/main/resources/silver/cnmc_precio_mensual.sql'),
+      ('l2:cnmc_precio_trimestral', 'silver:cnmc_precio_trimestral', 'silver_builder', 'silver/cnmc_precio_trimestral.sql (snapshot) · Spark Structured Streaming · SilverBuilder', 'src/main/resources/silver/cnmc_precio_trimestral.sql'),
+      ('l2:cnmc_viajeros_corredor', 'silver:cnmc_viajeros_corredor', 'silver_builder', 'silver/cnmc_viajeros_corredor.sql (snapshot) · Spark Structured Streaming · SilverBuilder', 'src/main/resources/silver/cnmc_viajeros_corredor.sql'),
+      ('l2:cnmc_viajeros_producto', 'silver:cnmc_viajeros_producto', 'silver_builder', 'silver/cnmc_viajeros_producto.sql (snapshot) · Spark Structured Streaming · SilverBuilder', 'src/main/resources/silver/cnmc_viajeros_producto.sql'),
+      ('l2:muestra_aemet', 'pred:prediccion_demanda_ave_mad_bcn', 'prediccion_demanda', 'Origen «meteo» de config/prediccion.yml', ''),
+      ('l2:muestra_eventos', 'pred:prediccion_demanda_ave_mad_bcn', 'prediccion_demanda', 'Origen «eventos» de config/prediccion.yml', ''),
+      ('l2:muestra_festivos', 'pred:prediccion_demanda_ave_mad_bcn', 'prediccion_demanda', 'Origen «festivos» de config/prediccion.yml', ''),
+      ('modelo:ollama', 'pred:prediccion_demanda_ave_mad_bcn', 'prediccion_demanda', 'El LLM reparte el total esperado entre los días (raillytics.prediccion)', ''),
+      ('pred:prediccion_demanda_ave_mad_bcn', 'gold:fact_prediccion_demanda', 'prediccion_demanda', 'Publicación en Gold de la predicción (raillytics.prediccion.publicacion)', ''),
+      ('silver:cnmc_precio_mensual', 'gold:fact_precio_mensual', 'gold_build', 'gold/fact_precio_mensual.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/fact_precio_mensual.sql'),
+      ('silver:cnmc_precio_trimestral', 'gold:fact_precio_trimestral', 'gold_build', 'gold/fact_precio_trimestral.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/fact_precio_trimestral.sql'),
+      ('silver:cnmc_trimestral', 'gold:fact_mercado_trimestral', 'gold_build', 'gold/fact_mercado_trimestral.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/fact_mercado_trimestral.sql'),
+      ('silver:cnmc_trimestral', 'pred:prediccion_demanda_ave_mad_bcn', 'prediccion_demanda', 'Origen «cnmc» de config/prediccion.yml', ''),
+      ('silver:puntualidad_enriquecida', 'gold:dim_fecha', 'gold_build', 'gold/dim_fecha.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/dim_fecha.sql'),
+      ('silver:puntualidad_enriquecida', 'gold:fact_puntualidad', 'gold_build', 'gold/fact_puntualidad.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/fact_puntualidad.sql'),
+      ('silver:viajeros_enriquecidos', 'gold:dim_estacion', 'gold_build', 'gold/dim_estacion.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/dim_estacion.sql'),
+      ('silver:viajeros_enriquecidos', 'gold:dim_fecha', 'gold_build', 'gold/dim_fecha.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/dim_fecha.sql'),
+      ('silver:viajeros_enriquecidos', 'gold:dim_linea', 'gold_build', 'gold/dim_linea.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/dim_linea.sql'),
+      ('silver:viajeros_enriquecidos', 'gold:dim_operador', 'gold_build', 'gold/dim_operador.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/dim_operador.sql'),
+      ('silver:viajeros_enriquecidos', 'gold:fact_viajeros', 'gold_build', 'gold/fact_viajeros.sql · Spark batch · GoldBuilder', 'src/main/resources/gold/fact_viajeros.sql'),
+      ('staging:cnmc_indicadores', 'l1:cnmc_indicadores', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:cnmc_precio_mensual', 'l1:cnmc_precio_mensual', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:cnmc_precio_trimestral', 'l1:cnmc_precio_trimestral', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:cnmc_viajeros_corredor', 'l1:cnmc_viajeros_corredor', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:cnmc_viajeros_producto', 'l1:cnmc_viajeros_producto', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:crtm', 'l1:crtm', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:renfe_trip_updates', 'l1:renfe_trip_updates', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', ''),
+      ('staging:renfe_vehicle_positions', 'l1:renfe_vehicle_positions', 'bronze_l1_raw_uploader', 'Copia el fichero tal cual a MinIO (Spark Streaming · RawUploader)', '')),
+  carga AS (
+      SELECT CASE proceso
+      WHEN 'bronze_download' THEN 'staging:' || tabla
+      WHEN 'bronze_l1_raw_uploader' THEN 'l1:' || tabla
+      WHEN 'bronze_l2_parquet_converter' THEN 'l2:' || split_part(tabla, '/', 1)
+      WHEN 'silver_builder' THEN 'silver:' || tabla
+      WHEN 'silver_sample' THEN 'silver:' || tabla
+      WHEN 'gold_build' THEN 'gold:' || tabla
+      WHEN 'prediccion_muestra' THEN 'l2:muestra_' || tabla
+      WHEN 'prediccion_demanda' THEN CASE WHEN tabla = 'fact_prediccion_demanda' THEN 'gold:' ELSE 'pred:' END || tabla
+    END AS nodo, run_id, proceso, estado, filas, duracion_s, error, parametros,
+             timezone('Europe/Madrid', timezone('UTC', inicio)) AS inicio
+      FROM read_parquet('s3://raillytics-gold/_trazabilidad/cargas/*.parquet', union_by_name = true)
+  ),
+  -- Una fila por (nodo, ejecución): un ZIP de L2 registra un fichero por fila y se suman sus filas.
+  por_run AS (
+      SELECT nodo, run_id, any_value(proceso) AS proceso, min(inicio) AS inicio, sum(filas) AS filas, sum(duracion_s) AS duracion_s,
+             CASE WHEN bool_or(estado = 'error') THEN 'error' ELSE 'ok' END AS estado,
+             string_agg(DISTINCT error, ' | ') AS error, any_value(parametros) AS parametros
+      FROM carga WHERE nodo IS NOT NULL GROUP BY nodo, run_id
+  ),
+  ultimo AS (SELECT * FROM por_run QUALIFY row_number() OVER (PARTITION BY nodo ORDER BY inicio DESC) = 1),
+  ultimo_proceso AS (SELECT * FROM por_run QUALIFY row_number() OVER (PARTITION BY nodo, proceso ORDER BY inicio DESC) = 1),
+  historico AS (
+      SELECT nodo, count(*) AS n_cargas, sum(CASE WHEN estado = 'error' THEN 1 ELSE 0 END) AS n_errores FROM por_run GROUP BY nodo
+  )
+  SELECT
+      a.origen, a.destino, o.capa AS categoria_origen, d.capa AS categoria_destino, a.proceso, a.transformacion, a.ruta,
+      CASE WHEN NOT d.trazable THEN 'no aplica' WHEN u.nodo IS NULL THEN 'sin ejecutar' ELSE u.estado END AS estado,
+      u.filas, u.inicio AS ultima_carga, u.run_id AS ultimo_run,
+      round(1 + ln(1 + coalesce(u.filas, 0)), 3) AS peso
+  FROM aristas a
+  JOIN nodos o ON o.nodo = a.origen
+  JOIN nodos d ON d.nodo = a.destino
+  LEFT JOIN ultimo_proceso u ON u.nodo = a.destino AND u.proceso = a.proceso
+  ORDER BY o.orden_capa, a.origen, a.destino
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 18e7f5b3-80c6-5e9a-80e9-4a0e759fe715
+metrics:
+- metric_name: n_saltos
+  verbose_name: Saltos
+  metric_type: null
+  expression: COUNT(*)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: peso_total
+  verbose_name: Grosor
+  metric_type: null
+  expression: SUM(peso)
+  description: null
+  d3format: ',.2f'
+  extra: null
+  warning_text: null
+columns:
+- column_name: origen
+  verbose_name: Origen
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: destino
+  verbose_name: Destino
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: categoria_origen
+  verbose_name: Capa de origen
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: categoria_destino
+  verbose_name: Capa de destino
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: proceso
+  verbose_name: Proceso
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: transformacion
+  verbose_name: Transformación
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: ruta
+  verbose_name: Fichero de la transformación
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: estado
+  verbose_name: Estado
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: filas
+  verbose_name: Filas
+  is_dttm: false
+  is_active: true
+  type: BIGINT
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: ultima_carga
+  verbose_name: Última carga
+  is_dttm: true
+  is_active: true
+  type: TIMESTAMP
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: ultimo_run
+  verbose_name: Última ejecución
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: peso
+  verbose_name: Grosor
+  is_dttm: false
+  is_active: true
+  type: DOUBLE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+version: 1.0.0
+database_uuid: c34b683c-9913-5c2c-b6a6-7d986acb824b

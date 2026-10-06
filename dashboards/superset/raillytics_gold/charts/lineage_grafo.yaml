@@ -1,0 +1,40 @@
+slice_name: Mapa de lineage (arrastra los nodos, rueda para ampliar)
+description: Un color por capa. Pulsa una capa de la leyenda para ocultarla o mostrarla; pasa el ratón por un nodo para ver sus saltos.
+certified_by: null
+certification_details: null
+viz_type: graph_chart
+params:
+  viz_type: graph_chart
+  adhoc_filters: []
+  source: origen
+  target: destino
+  metric: peso_total
+  source_category: categoria_origen
+  target_category: categoria_destino
+  row_limit: 1000
+  layout: force
+  edgeSymbol: none,arrow
+  draggable: true
+  roam: true
+  selectedMode: single
+  showSymbolThreshold: 0
+  baseNodeSize: 12
+  baseEdgeWidth: 2
+  edgeLength: 90
+  gravity: 0.35
+  repulsion: 160
+  friction: 0.5
+  color_scheme: supersetColors
+  show_legend: true
+  legendType: scroll
+  legendOrientation: top
+  legendMargin: 5
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 4f92b4a1-8a10-5ccc-ab24-f9f213734b16
+version: 1.0.0
+dataset_uuid: 18e7f5b3-80c6-5e9a-80e9-4a0e759fe715
+is_managed_externally: false
+external_url: null
