@@ -19,6 +19,7 @@ import pandas as pd
 from raillytics.calidad.registro import exigir, registrar_calidad
 from raillytics.prediccion.cache import CacheLLM, ClienteConCache
 from raillytics.prediccion.calendario import Calendario, construir_calendario
+from raillytics.prediccion.contexto_cnmc import construir_contexto
 from raillytics.prediccion.entradas import Entradas, cargar_config, cargar_entradas, raiz_bronze
 from raillytics.prediccion.gates import TABLA, evaluar_gates
 from raillytics.prediccion.nivel import NivelEsperado, calcular_nivel, desviacion_relativa, miles
@@ -116,7 +117,8 @@ def _prompt(
     """Calendario + plantilla + prompt final: lo que se muestra con --mostrar-prompt es lo que se envía."""
     calendario = construir_calendario(trimestre, entradas.festivos, entradas.eventos, entradas.meteo)
     plantilla = cargar_plantilla(version_prompt, Path(env.get("PROMPTS_DIR") or "config/prompts"))
-    return construir_prompt(plantilla, trimestre, total, publicados, calendario, CORREDOR), calendario
+    datos_cnmc = construir_contexto(entradas.cnmc, trimestre, total)
+    return construir_prompt(plantilla, trimestre, total, publicados, calendario, CORREDOR, datos_cnmc), calendario
 
 
 def _estado_cache(cliente: ClienteLLM) -> str:

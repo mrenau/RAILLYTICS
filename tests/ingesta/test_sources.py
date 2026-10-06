@@ -29,6 +29,7 @@ def test_load_sources_accepts_zip_and_the_project_registry_is_consistent():
     assert sources == {
         "crtm": "zip", "renfe_trip_updates": "json", "renfe_vehicle_positions": "json",
         "cnmc_indicadores": "csv", "cnmc_precio_trimestral": "csv", "cnmc_precio_mensual": "csv",
+        "cnmc_viajeros_producto": "csv", "cnmc_viajeros_corredor": "csv",
     }
 
 
@@ -142,6 +143,8 @@ def test_las_fuentes_cnmc_se_leen_con_punto_y_coma_y_una_tabla_silver_snapshot_c
         "cnmc_indicadores": [("cnmc_trimestral", "snapshot")],
         "cnmc_precio_trimestral": [("cnmc_precio_trimestral", "snapshot")],
         "cnmc_precio_mensual": [("cnmc_precio_mensual", "snapshot")],
+        "cnmc_viajeros_producto": [("cnmc_viajeros_producto", "snapshot")],
+        "cnmc_viajeros_corredor": [("cnmc_viajeros_corredor", "snapshot")],
     }
     assert all(s.url.startswith("https://catalogodatos.cnmc.es/") and s.url.endswith(".csv") for s in fuentes.values())
     assert all({"min_bytes", "min_filas", "columnas"} <= set(s.checks) for s in fuentes.values())

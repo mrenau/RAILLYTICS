@@ -71,6 +71,7 @@ help:
 	@echo "  06_superset-import    Reimporta los dashboards de dashboards/superset/ en Superset"
 	@echo "  07_prediccion         Predicción diaria de demanda AVE Madrid-Barcelona con un LLM (make 07_prediccion TRIMESTRE=2026-T4)"
 	@echo "                        (PRED_PROMPT=demanda_v2 elige la plantilla; PRED_ARGS=\"--solo-nivel\", \"--sin-cache\" o \"--total-esperado N\" pasan opciones)"
+	@echo "                        (antes comprueba los datos de la CNMC del trimestre y los descarga si faltan; PRED_CNMC=no lo omite)"
 	@echo "  prediccion-sample     Genera fuentes SINTETICAS de la prediccion (demanda trimestral, festivos, eventos y meteo) en Bronze L2"
 	@echo "  llm-up                Levanta Ollama (perfil llm del compose) y descarga OLLAMA_MODEL (LLM_GPU=1 reserva la GPU NVIDIA)"
 	@echo "  llm-down              Para y elimina los contenedores de Ollama (los modelos se conservan en su volumen)"
@@ -167,8 +168,14 @@ MUESTRA_ARGS ?=
 prediccion-sample: $(VENV)/.deps-installed
 	$(VENV_PY) -m raillytics.prediccion.muestra $(MUESTRA_ARGS)
 
+# Antes de predecir comprueba que Silver tiene los datos de la CNMC que exige el trimestre (el mismo trimestre del año
+# anterior, el último publicado y su gemelo) y, si faltan, los descarga (DAG de descarga -> L1 -> L2 -> Silver): usa el stack
+# de docker, así que lo levanta si está parado. PRED_CNMC=no se salta la comprobación (p. ej. con --total-esperado y sin Docker).
+PRED_CNMC ?= auto
+
 07_prediccion: $(VENV)/.deps-installed
 	$(if $(TRIMESTRE),,$(error Falta TRIMESTRE: make 07_prediccion TRIMESTRE=2026-T4))
+	$(if $(filter no,$(PRED_CNMC)),,$(VENV_PY) scripts/carga_e2e.py --make "$(E2E_MAKE)" --compose "$(COMPOSE)" --asegurar-cnmc --trimestre $(TRIMESTRE))
 	$(VENV_PY) -m raillytics.prediccion --trimestre $(TRIMESTRE) --prompt $(PRED_PROMPT) $(PRED_ARGS)
 
 

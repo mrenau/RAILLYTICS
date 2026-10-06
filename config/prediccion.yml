@@ -5,6 +5,9 @@
 #
 #   trimestrales  trimestre ('AAAA-Tn'), viajeros (entero)
 #                 UNA fila por trimestre: solo el corredor AVE Madrid–Barcelona, ambos sentidos sumados.
+#   cnmc          (OPCIONAL) trimestre ('AAAA-Tn'), operador, viajeros, plazas_ofertadas (puede ser NULL)
+#                 UNA fila por (trimestre, operador) del corredor: el detalle que usan las plantillas cnmc_vN
+#                 (`{{datos_cnmc}}`: ocupación, tendencia y cuotas). Sin este origen el resto funciona igual.
 #   festivos      fecha (DATE), nombre
 #   eventos       fecha (DATE), descripcion, ciudad ('MAD', 'BCN' o NULL)
 #   meteo         fecha (DATE), ciudad ('MAD' | 'BCN'), temperatura_media, precipitacion_mm
@@ -14,7 +17,7 @@
 # Marcadores de ruta: {bronze}, {silver}, {gold} (bucket de MinIO o directorio local, según el .env).
 #
 # ORIGEN DE LOS DATOS:
-#   trimestrales  REAL: la demanda del corredor de la CNMC, que construye `make 04_silver` en {silver}/cnmc_trimestral
+#   trimestrales y cnmc  REAL: la demanda del corredor de la CNMC, que construye `make 04_silver` en {silver}/cnmc_trimestral
 #                 (suma de los operadores del corredor, sin la fila TOTAL, que solo trae ingresos).
 #   festivos, eventos y meteo  siguen leyendo la muestra SINTÉTICA (NO son datos reales): `make prediccion-sample` genera
 #                 las fuentes en {bronze}/l2/muestra_<fuente>/ con las columnas que asumen estas consultas, para poder
@@ -33,6 +36,12 @@ origenes:
       WHERE corredor = 'Madrid-Barcelona' AND operador_id <> 'TOTAL'
       GROUP BY 1
       ORDER BY 1
+  cnmc:
+    sql: |
+      SELECT concat(anio, '-T', trimestre) AS trimestre, operador_id AS operador, viajeros, plazas_ofertadas
+      FROM read_parquet('{silver}/cnmc_trimestral/*.parquet')
+      WHERE corredor = 'Madrid-Barcelona' AND operador_id <> 'TOTAL'
+      ORDER BY 1, 2
   festivos:
     sql: |
       SELECT fecha, nombre

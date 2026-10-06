@@ -15,8 +15,12 @@ empezar se salta entera (no se paga el arranque de sbt).
 La predicción va al final y no con el flag `predecir` del DAG: necesita Silver (silver/cnmc_trimestral), que aún no existe
 cuando acaba la descarga.
 
+Con --asegurar-cnmc --trimestre AAAA-Tn no hace la carga completa: comprueba que Silver tiene los datos de la CNMC que exige
+ese trimestre (raillytics.prediccion.cnmc) y solo si faltan hace descarga -> L1 -> L2 -> Silver. Es lo que `make 07_prediccion`
+ejecuta antes de predecir.
+
 Uso:  python scripts/carga_e2e.py [--make make] [--compose "docker compose ..."] [--trimestre 2026-T4]
-                                  [--desde PASO] [--sin-prediccion]
+                                  [--desde PASO] [--sin-prediccion] [--asegurar-cnmc]
 """
 from __future__ import annotations
 
@@ -348,7 +352,53 @@ def paso_gold(ctx: Contexto) -> None:
 def paso_prediccion(ctx: Contexto) -> None:
     make(ctx, "llm-up")
     make(ctx, "prediccion-sample")     # festivos, eventos y meteo sintéticos (a prefijos propios, no pisan datos reales)
-    make(ctx, "07_prediccion", f"TRIMESTRE={ctx.trimestre}")
+    # PRED_CNMC=no: la CNMC acaba de descargarse y pasar por Silver en esta misma carga, no hace falta comprobarla otra vez.
+    make(ctx, "07_prediccion", f"TRIMESTRE={ctx.trimestre}", "PRED_CNMC=no")
+
+
+# ----------------------------------------------------------------------------------------------------- datos de la CNMC
+
+def asegurar_cnmc(trimestre: str, comprobar: Callable[[], object], descargar: Callable[[], None]) -> int:
+    """Comprueba que hay datos de la CNMC para `trimestre`; si faltan, los descarga y vuelve a comprobar.
+
+    Tras descargar no bloquea aunque la CNMC siga sin cubrir el trimestre (puede no haber publicado aún): avisa y deja que el
+    predictor decida con lo que haya. Devuelve el código de salida: 0, o 1 si la descarga falla.
+    """
+    cobertura = comprobar()
+    if cobertura.suficiente:
+        log(f"Hay datos de la CNMC para {trimestre}: {cobertura.descripcion}")
+        return 0
+    log(f"Faltan datos de la CNMC para {trimestre} ({cobertura.motivo}): se descargan antes de predecir")
+    try:
+        descargar()
+    except CargaError as e:
+        log(f"✗ descarga de la CNMC: {e}")
+        return 1
+    cobertura = comprobar()
+    if cobertura.suficiente:
+        log(f"Datos de la CNMC listos para {trimestre}: {cobertura.descripcion}")
+    else:
+        log(f"AVISO: tras descargar, la CNMC sigue sin cubrir {trimestre} ({cobertura.motivo}); "
+            "puede que aún no haya publicado más. Se predice con lo que hay")
+    return 0
+
+
+def _comprobar_cnmc(trimestre: str) -> object:
+    sys.path.insert(0, str(RAIZ / "python"))
+    from raillytics.prediccion.cnmc import comprobar
+    from raillytics.prediccion.trimestre import Trimestre
+
+    return comprobar(Trimestre.parse(trimestre), os.environ)
+
+
+def _descargar_cnmc(ctx: Contexto) -> None:
+    # `make up` solo si hace falta: relanza los contenedores *-init y tarda ~20 s.
+    if not (_minio_vivo() and _dag_visible(ctx)):
+        paso_infra(ctx)
+    paso_descarga(ctx)
+    paso_l1(ctx)
+    paso_l2(ctx)
+    paso_silver(ctx)
 
 
 # ----------------------------------------------------------------------------------------------------- main
@@ -361,6 +411,8 @@ def parsear(argv: Sequence[str] | None = None) -> argparse.Namespace:
     p.add_argument("--trimestre", default="", help="trimestre a predecir, AAAA-Tn (por defecto, el en curso)")
     p.add_argument("--desde", choices=PASOS, default=PASOS[0], help="empieza en este paso (para reanudar tras un fallo)")
     p.add_argument("--sin-prediccion", action="store_true", help="no ejecuta la predicción (no necesita Ollama)")
+    p.add_argument("--asegurar-cnmc", action="store_true",
+                   help="solo comprueba (y si faltan, descarga) los datos de la CNMC que exige --trimestre; no hace la carga completa")
     p.add_argument("--timeout-fase", type=float, default=1800, help="segundos máximos de cada app de streaming (por defecto 1800)")
     p.add_argument("--silencio-silver", type=float, default=75,
                    help="segundos sin batches nuevos para dar Silver por terminado (por defecto 75: 2,5 veces su trigger de 30 s)")
@@ -376,12 +428,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ImportError:
         pass
 
+    if args.asegurar_cnmc and not args.trimestre:
+        print("--asegurar-cnmc necesita --trimestre AAAA-Tn", file=sys.stderr)
+        return 2
+
     ctx = Contexto(
         make=shlex.split(args.make), compose=shlex.split(args.compose),
         trimestre=args.trimestre or trimestre_en_curso(date.today()),
         logs=Path(os.environ.get("E2E_LOGS", "data/logs/carga_e2e")),
         timeout_fase=args.timeout_fase, silencio_silver=args.silencio_silver,
     )
+    if args.asegurar_cnmc:
+        return asegurar_cnmc(ctx.trimestre, lambda: _comprobar_cnmc(ctx.trimestre), lambda: _descargar_cnmc(ctx))
     if args.sin_prediccion and args.desde == "prediccion":
         print("--desde prediccion y --sin-prediccion se contradicen", file=sys.stderr)
         return 2

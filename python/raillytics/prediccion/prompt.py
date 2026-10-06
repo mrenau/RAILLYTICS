@@ -52,6 +52,7 @@ def construir_prompt(
     historico: Mapping[Trimestre, int],
     calendario: Calendario,
     corredor: str,
+    datos_cnmc: str = "",
 ) -> str:
     previos = sorted(t for t in historico if t < trimestre)[-MAX_HISTORICO:]
     lineas_historico = "\n".join(f"- {t}: {miles(historico[t])} viajeros" for t in previos)
@@ -75,5 +76,7 @@ def construir_prompt(
             # Modo eventos (plantillas eventos_vN): solo los días con evento, que son los únicos que valora el LLM.
             "dias_con_evento": "\n".join(con_evento) or "(ningún día con evento)",
             "num_dias_con_evento": str(len(con_evento)),
+            # Plantillas cnmc_vN: viajeros, plazas, ocupación y cuotas reales (raillytics.prediccion.contexto_cnmc).
+            "datos_cnmc": datos_cnmc,
         },
     )

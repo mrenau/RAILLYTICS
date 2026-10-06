@@ -32,6 +32,8 @@ opcionales:
   - silver_cnmc_trimestral
   - silver_cnmc_precio_trimestral
   - silver_cnmc_precio_mensual
+  - silver_cnmc_viajeros_producto
+  - silver_cnmc_viajeros_corredor
   - gold_fact_mercado_trimestral
   - gold_fact_precio_trimestral
   - gold_fact_precio_mensual
@@ -126,6 +128,35 @@ tablas:
        sql: "SELECT count(*) FROM silver_cnmc_precio_mensual WHERE operador_id = 'OTRO'"}
     - {nombre: serie_actualizada,           tipo: sql, severidad: aviso, maximo: 6,
        sql: "SELECT (year(current_date()) * 12 + month(current_date())) - max(anio * 12 + mes) FROM silver_cnmc_precio_mensual"}
+
+  # Demanda trimestral en millones (ficheros del 2026-10-01: 210 y 342 filas). Solo Silver: Gold no las usa todavía.
+  silver_cnmc_viajeros_producto:
+    - {nombre: filas_minimas,               tipo: filas_min, minimo: 120, severidad: bloqueante}
+    - {nombre: claves_sin_nulos,            tipo: no_nulos, columnas: [anio, trimestre, fecha_inicio, tipo_producto, viajeros_millones], severidad: bloqueante}
+    - {nombre: grano_unico,                 tipo: unico, columnas: [anio, trimestre, tipo_producto], severidad: bloqueante}
+    - {nombre: trimestre_valido,            tipo: rango, columna: trimestre, minimo: 1, maximo: 4, severidad: bloqueante}
+    - {nombre: volumenes_no_negativos,      tipo: sql, severidad: bloqueante,
+       sql: "SELECT count(*) FROM silver_cnmc_viajeros_producto WHERE viajeros_millones < 0 OR plazas_millones < 0"}
+    # Sin Larga Distancia Alta Velocidad no hay serie del producto del proyecto.
+    - {nombre: ld_av_presente,              tipo: sql, severidad: bloqueante, minimo: 1, maximo: 1000000000,
+       sql: "SELECT count(*) FROM silver_cnmc_viajeros_producto WHERE tipo_producto = 'LD AV'"}
+    - {nombre: productos_conocidos,         tipo: dominio, columna: tipo_producto, valores: [Cercanías, LD AV, LD Convencional, MD AV, MD Convencional], severidad: aviso}
+    - {nombre: serie_actualizada,           tipo: sql, severidad: aviso, maximo: 3,
+       sql: "SELECT (year(current_date()) * 4 + quarter(current_date())) - max(anio * 4 + trimestre) FROM silver_cnmc_viajeros_producto"}
+
+  silver_cnmc_viajeros_corredor:
+    - {nombre: filas_minimas,               tipo: filas_min, minimo: 190, severidad: bloqueante}
+    - {nombre: claves_sin_nulos,            tipo: no_nulos, columnas: [anio, trimestre, fecha_inicio, corredor, empresa, viajeros_millones], severidad: bloqueante}
+    - {nombre: grano_unico,                 tipo: unico, columnas: [anio, trimestre, corredor, empresa], severidad: bloqueante}
+    - {nombre: trimestre_valido,            tipo: rango, columna: trimestre, minimo: 1, maximo: 4, severidad: bloqueante}
+    - {nombre: volumenes_no_negativos,      tipo: sql, severidad: bloqueante,
+       sql: "SELECT count(*) FROM silver_cnmc_viajeros_corredor WHERE viajeros_millones < 0 OR plazas_millones < 0"}
+    - {nombre: corredor_madrid_barcelona_presente, tipo: sql, severidad: bloqueante, minimo: 1, maximo: 1000000000,
+       sql: "SELECT count(*) FROM silver_cnmc_viajeros_corredor WHERE corredor = 'Madrid-Barcelona'"}
+    - {nombre: empresas_conocidas,          tipo: sql, severidad: aviso,
+       sql: "SELECT count(*) FROM silver_cnmc_viajeros_corredor WHERE operador_id = 'OTRO'"}
+    - {nombre: serie_actualizada,           tipo: sql, severidad: aviso, maximo: 3,
+       sql: "SELECT (year(current_date()) * 4 + quarter(current_date())) - max(anio * 4 + trimestre) FROM silver_cnmc_viajeros_corredor"}
 
   # ---- Gold: claves, integridad referencial y conciliación con Silver ----
   gold_dim_fecha:

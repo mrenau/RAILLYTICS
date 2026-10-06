@@ -200,3 +200,55 @@ def test_el_script_se_puede_importar_sin_efectos_secundarios():
     resultado = subprocess.run([sys.executable, str(RUTA), "--help"], capture_output=True, text=True)
     assert resultado.returncode == 0
     assert "--sin-prediccion" in resultado.stdout
+
+
+# --------------------------------------------------------------------------------------------- asegurar_cnmc
+
+from types import SimpleNamespace
+
+
+def cobertura(suficiente, motivo="", descripcion="2025-T4, 2025-T2 y 2026-T2 publicados"):
+    return SimpleNamespace(suficiente=suficiente, motivo=motivo, descripcion=descripcion)
+
+
+def test_si_el_lake_ya_tiene_los_datos_no_se_descarga_nada(capsys):
+    llamadas = []
+
+    codigo = e2e.asegurar_cnmc("2026-T4", lambda: cobertura(True), lambda: llamadas.append("descarga"))
+
+    assert codigo == 0 and llamadas == []
+    assert "2026-T4" in capsys.readouterr().out
+
+
+def test_si_faltan_se_descargan_y_se_vuelve_a_comprobar(capsys):
+    estados = iter([cobertura(False, "faltan los trimestres 2025-T4"), cobertura(True)])
+    llamadas = []
+
+    codigo = e2e.asegurar_cnmc("2026-T4", lambda: next(estados), lambda: llamadas.append("descarga"))
+
+    assert codigo == 0 and llamadas == ["descarga"]
+    salida = capsys.readouterr().out
+    assert "faltan los trimestres 2025-T4" in salida and "descargan" in salida
+
+
+def test_si_tras_descargar_la_cnmc_sigue_sin_cubrir_el_trimestre_avisa_pero_no_bloquea(capsys):
+    # La CNMC puede no haber publicado aún: el predictor decide con lo que haya (y avisa o pide --total-esperado).
+    codigo = e2e.asegurar_cnmc("2027-T1", lambda: cobertura(False, "último publicado 2026-T2"), lambda: None)
+
+    assert codigo == 0
+    assert "AVISO" in capsys.readouterr().out
+
+
+def test_si_la_descarga_falla_se_corta_con_error(capsys):
+    def descargar():
+        raise e2e.CargaError("silver: tiempo agotado")
+
+    codigo = e2e.asegurar_cnmc("2026-T4", lambda: cobertura(False, "no hay datos"), descargar)
+
+    assert codigo == 1
+    assert "silver: tiempo agotado" in capsys.readouterr().out
+
+
+def test_la_cli_asegurar_cnmc_exige_el_trimestre(capsys):
+    assert e2e.main(["--asegurar-cnmc"]) == 2
+    assert "--trimestre" in capsys.readouterr().err

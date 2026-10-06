@@ -188,7 +188,7 @@ def test_la_plantilla_de_eventos_solo_lleva_los_dias_con_evento():
     assert "(ningún día con evento)" in construir_prompt("{{dias_con_evento}}", T4, 1, {}, _calendario(), "X")
 
 
-@pytest.mark.parametrize("version", ["demanda_v2", "demanda_v3", "demanda_v4", "eventos_v1"])
+@pytest.mark.parametrize("version", ["demanda_v2", "demanda_v3", "demanda_v4", "eventos_v1", "cnmc_v1"])
 def test_las_plantillas_estan_estructuradas_en_secciones_y_tratan_el_calendario_como_datos(version):
     texto = cargar_plantilla(version, PROMPTS)
 
@@ -202,7 +202,7 @@ def _respuesta_del_ejemplo(texto):
     return json.loads(texto.split("Respuesta correcta para ese fragmento:\n")[1].split("\n</ejemplo>")[0])["dias"]
 
 
-@pytest.mark.parametrize("version", ["demanda_v2", "demanda_v3", "demanda_v4", "eventos_v1"])
+@pytest.mark.parametrize("version", ["demanda_v2", "demanda_v3", "demanda_v4", "eventos_v1", "cnmc_v1"])
 def test_el_ejemplo_de_la_plantilla_cumple_el_contrato_de_respuesta(version):
     dias = _respuesta_del_ejemplo(cargar_plantilla(version, PROMPTS))
 
@@ -213,7 +213,7 @@ def test_el_ejemplo_de_la_plantilla_cumple_el_contrato_de_respuesta(version):
         assert INDICE_MIN <= dia["indice"] <= INDICE_MAX and len(dia["motivo"].split()) <= 10
 
 
-@pytest.mark.parametrize("version", ["demanda_v3", "demanda_v4"])
+@pytest.mark.parametrize("version", ["demanda_v3", "demanda_v4", "cnmc_v1"])
 def test_el_ejemplo_son_dias_seguidos_que_aplican_las_definiciones_con_las_que_se_mide(version):
     texto = cargar_plantilla(version, PROMPTS)
     fragmento = texto.split("<ejemplo>")[1].split("Respuesta correcta")[0]
@@ -246,3 +246,19 @@ def test_el_ejemplo_son_dias_seguidos_que_aplican_las_definiciones_con_las_que_s
             for fila in tipos.itertuples(index=False)
         }
         assert [c[4] for c in campos] == [f"contexto: {etiquetas[f]}" for f in fechas]
+
+
+def test_el_marcador_datos_cnmc_lleva_el_bloque_y_por_defecto_va_vacio():
+    assert construir_prompt("[{{datos_cnmc}}]", T4, 1, {}, _calendario(), "X") == "[]"
+    assert construir_prompt("[{{datos_cnmc}}]", T4, 1, {}, _calendario(), "X", datos_cnmc="ocupación 71 %") == "[ocupación 71 %]"
+
+
+def test_cnmc_v1_se_rellena_entera_y_lleva_los_datos_de_la_cnmc_dentro_del_contexto():
+    texto = cargar_plantilla("cnmc_v1", PROMPTS)
+
+    prompt = construir_prompt(texto, T4, 1_320_000, HISTORICO, _calendario(), "AVE-MAD-BCN", datos_cnmc="DATOS-CNMC-AQUÍ")
+
+    assert "{{" not in prompt
+    dentro_del_contexto = prompt.split("<contexto>")[1].split("</contexto>")[0]
+    assert "DATOS-CNMC-AQUÍ" in dentro_del_contexto
+    assert "techo de los picos" in prompt.split("<criterios>")[1].split("</criterios>")[0].lower()  # explica cómo usar esos datos

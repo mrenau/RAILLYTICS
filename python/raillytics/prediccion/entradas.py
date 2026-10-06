@@ -43,7 +43,14 @@ CONTRATOS = {
     "meteo": Contrato(
         ("fecha", "ciudad", "temperatura_media", "precipitacion_mm"), ("fecha", "ciudad"), ("fecha", "ciudad")
     ),
+    # Detalle de la CNMC por operador (viajeros y plazas): lo usan las plantillas con `{{datos_cnmc}}` (cnmc_vN).
+    # Las plazas pueden faltar (la CNMC no las da antes de 2018).
+    "cnmc": Contrato(
+        ("trimestre", "operador", "viajeros", "plazas_ofertadas"), ("trimestre", "operador"), ("trimestre", "operador", "viajeros")
+    ),
 }
+# Orígenes que la config puede omitir: sin ellos la predicción funciona igual (solo no hay bloque de la CNMC en el prompt).
+OPCIONALES = frozenset({"cnmc"})
 
 
 @dataclass(frozen=True)
@@ -52,6 +59,7 @@ class Entradas:
     festivos: pd.DataFrame
     eventos: pd.DataFrame
     meteo: pd.DataFrame
+    cnmc: pd.DataFrame | None = None
 
     def trimestrales_dict(self) -> dict[Trimestre, int]:
         return {
@@ -81,6 +89,8 @@ def cargar_config(ruta: Path) -> dict[str, str]:
     for nombre in CONTRATOS:
         entrada = origenes.get(nombre)
         sql = entrada.get("sql") if isinstance(entrada, dict) else None
+        if nombre in OPCIONALES and entrada is None:
+            continue
         if not isinstance(sql, str) or not sql.strip():
             raise EntradaError(f"{ruta}: falta 'origenes.{nombre}.sql'")
         consultas[nombre] = sql
@@ -93,7 +103,11 @@ def cargar_entradas(
     con: duckdb.DuckDBPyConnection,
     env: Mapping[str, str] = os.environ,
 ) -> Entradas:
-    return Entradas(**{nombre: _cargar(nombre, consultas[nombre], layout, con, env) for nombre in CONTRATOS})
+    return Entradas(**{
+        nombre: _cargar(nombre, consultas[nombre], layout, con, env)
+        for nombre in CONTRATOS
+        if nombre in consultas or nombre not in OPCIONALES
+    })
 
 
 def _cargar(
@@ -112,6 +126,17 @@ def _cargar(
             "¿Ha ingestado Airflow esta fuente? Revisa también su consulta en config/prediccion.yml"
         ) from exc
     return _validar(nombre, df)
+
+
+def cargar_trimestrales(
+    consultas: Mapping[str, str],
+    layout: LakeLayout,
+    con: duckdb.DuckDBPyConnection,
+    env: Mapping[str, str] = os.environ,
+) -> dict[Trimestre, int]:
+    """Solo el origen `trimestrales` (la demanda de la CNMC): para comprobar su cobertura sin exigir los otros tres."""
+    df = _cargar("trimestrales", consultas["trimestrales"], layout, con, env)
+    return {Trimestre.parse(t): int(v) for t, v in zip(df["trimestre"], df["viajeros"])}
 
 
 def _resumir(exc: Exception) -> str:
@@ -163,6 +188,13 @@ def _normalizar_por_origen(nombre: str, df: pd.DataFrame) -> None:
         if (viajeros != viajeros.round()).any():
             raise ValueError("viajeros debe ser un número entero")
         df["viajeros"] = viajeros.round().astype("int64")
+    elif nombre == "cnmc":
+        df["trimestre"] = df["trimestre"].astype(str).str.strip()
+        for texto in df["trimestre"]:
+            Trimestre.parse(texto)
+        df["operador"] = df["operador"].astype(str).str.strip()
+        df["viajeros"] = pd.to_numeric(df["viajeros"])
+        df["plazas_ofertadas"] = pd.to_numeric(df["plazas_ofertadas"])
     elif nombre == "festivos":
         df["nombre"] = df["nombre"].astype(str).str.strip()
     elif nombre == "eventos":

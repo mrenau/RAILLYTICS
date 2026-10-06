@@ -249,7 +249,9 @@ typo como `optons` no se ignora en silencio.
 | `silver` | no | tablas que construye `make 04_silver` desde la fuente: lista de `{tabla, modo}` con modo `snapshot` o `incremental` |
 
 `options`, `checks` y `silver` solo se admiten en fuentes `csv`, y una tabla Silver no puede declararla más de una fuente. Ejemplo
-(la fuente de indicadores de la CNMC, CSV con `;` y BOM):
+(la fuente de indicadores de la CNMC, CSV con `;` y BOM; hay además dos fuentes de demanda trimestral, cada una con su tabla Silver:
+`cnmc_viajeros_producto`, total nacional por tipo de producto, y `cnmc_viajeros_corredor`, LD AV por corredor y empresa, que concuerda con
+`cnmc_indicadores`):
 
 ```yaml
   - id: cnmc_indicadores
@@ -373,7 +375,9 @@ Para **añadir una tabla**: una entrada `silver:` en su fuente, `src/main/resour
 `config/quality_gates.yml` y, si puede no existir aún, su nombre en `opcionales:`. No hay que tocar código Scala.
 
 El Silver sintético (`03_silver-sample`) y el real **conviven** en el mismo bucket con tablas distintas: el sintético aporta el detalle diario
-y el real, los indicadores trimestrales del corredor (viajeros, plazas, tren·km, ingresos y precio medio por operador) de la CNMC. Como L2 lee
+y el real, los indicadores trimestrales del corredor (viajeros, plazas, tren·km, ingresos y precio medio por operador) de la CNMC, más dos
+tablas de demanda en **millones** (`cnmc_viajeros_producto`, total nacional por tipo de producto, y `cnmc_viajeros_corredor`, LD AV por corredor
+y empresa; Gold todavía no las usa). Como L2 lee
 las fuentes del YAML al arrancar, hay que **reiniciar `make 02_parquet-converter` una vez** tras añadir una fuente.
 
 ---
@@ -577,6 +581,8 @@ Reglas de las tablas reales de la CNMC (B = bloqueante, A = aviso):
 | --- | --- |
 | `silver_cnmc_trimestral` | filas mínimas B; claves sin nulos B; grano único B; `operador_id` en {RENFE, IRYO, OUIGO, TOTAL, OTRO} B; trimestre en [1, 4] B; volúmenes ≥ 0 B; **Madrid–Barcelona presente** B; sin empresas desconocidas (`OTRO`) A; volúmenes solo en operadores e ingresos solo en `TOTAL` A; serie del corredor sin huecos A; serie actualizada (último trimestre a ≤ 3 del actual) A; viajeros por plaza en [0, 2] A |
 | `silver_cnmc_precio_*` | filas mínimas B; claves sin nulos B; grano único B; operador válido (incluye `AVLO`) B; precio en (0, 500] B; Madrid–Barcelona presente B; serie actualizada A |
+| `silver_cnmc_viajeros_producto` | filas mínimas B; claves sin nulos B; grano único B; trimestre en [1, 4] B; volúmenes ≥ 0 B; **LD AV presente** B; tipo de producto conocido A; serie actualizada A |
+| `silver_cnmc_viajeros_corredor` | filas mínimas B; claves sin nulos B; grano único B; trimestre en [1, 4] B; volúmenes ≥ 0 B; **Madrid–Barcelona presente** B; sin empresas desconocidas (`OTRO`) A; serie actualizada A |
 | `gold_fact_mercado_trimestral`, `gold_fact_precio_*` | grano único B; integridad referencial a `dim_linea` y `dim_operador` (tolera `TOTAL` y `OTRO`) B; **conciliación con Silver** (filas y suma de viajeros del corredor) B; claves sin nulos B |
 
 Los resultados se guardan en `s3://raillytics-gold/_trazabilidad/calidad/` (Parquet: `run_id`,
@@ -650,6 +656,14 @@ make 07_prediccion TRIMESTRE=2026-T4 PRED_ARGS="--total-esperado 4200000" # fija
 make 07_prediccion TRIMESTRE=2026-T4 PRED_PROMPT=demanda_v2 PRED_ARGS="--mostrar-prompt"   # imprime el prompt y termina (sin LLM)
 make llm-down
 ```
+
+**Datos de la CNMC.** Antes de predecir, `make 07_prediccion` comprueba que Silver tiene los datos de la CNMC que exige el trimestre
+(`python -m raillytics.prediccion.cnmc`): el mismo trimestre del año anterior, el último publicado y su gemelo, con el último a **2 trimestres
+o menos** del objetivo (la CNMC publica con ~1 trimestre de retraso). Si los hay, los usa. Si no, **los descarga primero**
+(`scripts/carga_e2e.py --asegurar-cnmc`: DAG de descarga → L1 → L2 → Silver, levantando el stack si está parado) y vuelve a comprobar.
+Si tras descargar la CNMC sigue sin cubrir el trimestre (aún no ha publicado más), avisa y deja que el predictor decida con lo que haya
+(calcula el nivel hasta 4 trimestres de distancia; más allá pide `--total-esperado`). `PRED_CNMC=no` se salta la comprobación (p. ej. con
+`--total-esperado` y sin Docker).
 
 `--solo-nivel` (calcula el total y termina) y `--mostrar-prompt` (imprime el prompt exacto y termina) no llaman al LLM: sirven para iterar sin gastar minutos de GPU. Si el trimestre ya está
 publicado, se relanza como **backtest** (el nivel nunca mira al propio trimestre) y se informa de cuánto se
@@ -832,6 +846,19 @@ sobre un día corriente del mismo día de la semana, v3 → v4; n/d = el trimest
   un festivo que además es regreso (6 de enero) sale como día laborable. Es decir, el modelo ve el contexto pero no
   siempre hace la suma: lo robusto sería que el código calcule el valor base y los ajustes fijos y el LLM solo valore
   los eventos.
+
+**`cnmc_v1.md`**. Es `demanda_v4` con un bloque de **datos reales de la CNMC** en `<contexto>` (`{{datos_cnmc}}`, que construye
+`raillytics.prediccion.contexto_cnmc`): para los 8 últimos trimestres publicados, viajeros, plazas ofertadas, relación viajeros/plazas,
+variación interanual y cuotas por operador, y para el trimestre objetivo la relación esperada y un **techo de los picos**. Lo calcula el
+código; el LLM solo lo interpreta (los criterios le dicen cómo). Sale del origen opcional `cnmc` de `config/prediccion.yml`
+(`silver/cnmc_trimestral` por operador); sin él, el bloque avisa de que no hay datos y el prompt funciona igual. Se elige con
+`PRED_PROMPT=cnmc_v1` (no es la plantilla por defecto).
+
+La relación viajeros/plazas **no es una ocupación**: la CNMC cuenta viajeros y plazas con criterios distintos y supera el 100 % en varios
+trimestres (Renfe llega al 115 %; el corredor, 104–106 % en 2025-T2/T3 y 2026-T2). Por eso el techo no es `1/ocupación`: es la **máxima
+relación ya publicada** dividida entre la esperada (con las mismas plazas ya se movió hasta esa relación; en 2026-T4, 1,33 veces la demanda
+media diaria). El modelo lo trata como orientación, no como límite: en la prueba con `mistral-nemo` 4 de 92 días lo superaron (con
+`eventos_v1`, 5), todos vísperas de tramo festivo.
 
 ### Modo eventos: reglas en código y el LLM solo para los eventos
 

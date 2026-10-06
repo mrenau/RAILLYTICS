@@ -90,7 +90,8 @@ def _silver_cnmc_desde_la_muestra(layout, con, muestra):
     demanda = muestra["demanda_trimestral"]
     con.register("demanda_muestra", demanda[demanda["corredor"] == "AVE-MAD-BCN"])
     con.execute(
-        "COPY (SELECT anio, trimestre, 'Madrid-Barcelona' AS corredor, 'RENFE' AS operador_id, sum(viajeros) AS viajeros "
+        "COPY (SELECT anio, trimestre, 'Madrid-Barcelona' AS corredor, 'RENFE' AS operador_id, sum(viajeros) AS viajeros, "
+        "CAST(NULL AS BIGINT) AS plazas_ofertadas "
         f"FROM demanda_muestra GROUP BY anio, trimestre) TO '{(destino / 'cnmc_trimestral.parquet').as_posix()}' (FORMAT PARQUET)"
     )
 

@@ -63,3 +63,27 @@ sources:
       columnas: ["Mes", "Empresa", "Tipo de servicio", "Tipo de producto", "Trayecto", "Precio (€)"]
     silver:
       - {tabla: cnmc_precio_mensual, modo: snapshot}
+  # Demanda trimestral (viajeros y plazas en millones, 2016T1-2026T2) en otros dos cortes. El de corredor repite lo que ya trae
+  # cnmc_indicadores para LD AV (con menos columnas y en millones); el de producto es el total nacional, de contexto.
+  - id: cnmc_viajeros_producto
+    name: "CNMC - Viajeros y plazas trimestrales por tipo de producto (Cercanías, MD y LD; total nacional)"
+    url: "https://catalogodatos.cnmc.es/dataset/1e30c002-296b-43ac-a543-83a2409ca2c0/resource/10834ee7-55ea-466d-8d42-ce2f109c785d/download/ds_24407_1.csv"
+    format: csv
+    options: {delimiter: ";"}
+    checks:
+      min_bytes: 3000
+      min_filas: 120
+      columnas: ["Trimestre", "Tipo de producto", "Plazas Ofertadas (Mill.)", "Viajeros (Mill.)"]
+    silver:
+      - {tabla: cnmc_viajeros_producto, modo: snapshot}
+  - id: cnmc_viajeros_corredor
+    name: "CNMC - Viajeros y plazas trimestrales de larga distancia alta velocidad por corredor y empresa"
+    url: "https://catalogodatos.cnmc.es/dataset/361af21a-b03a-4194-ae58-449a49456b1a/resource/1005487a-3c01-4807-bff7-dceb2a5d6bfc/download/ds_24408_1.csv"
+    format: csv
+    options: {delimiter: ";"}
+    checks:
+      min_bytes: 8000
+      min_filas: 190
+      columnas: ["Trimestre", "Corredor", "Empresa", "Plazas Ofertadas (Mill.)", "Viajeros (Mill.)"]
+    silver:
+      - {tabla: cnmc_viajeros_corredor, modo: snapshot}

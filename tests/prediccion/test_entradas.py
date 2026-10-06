@@ -2,11 +2,13 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+import yaml
 
 from raillytics.prediccion.entradas import (
     EntradaError,
     cargar_config,
     cargar_entradas,
+    cargar_trimestrales,
     raiz_bronze,
     resolver_origen,
 )
@@ -209,8 +211,58 @@ def test_cargar_config_falla_si_no_existe(tmp_path):
         cargar_config(tmp_path / "no_existe.yml")
 
 
-def test_la_config_por_defecto_del_repo_define_los_cuatro_origenes():
+def test_la_config_por_defecto_del_repo_define_los_cuatro_origenes_y_el_opcional_cnmc():
     consultas = cargar_config(RAIZ / "config" / "prediccion.yml")
 
-    assert set(consultas) == set(CONSULTAS)
+    assert set(consultas) == set(CONSULTAS) | {"cnmc"}
     assert all("SELECT" in sql for sql in consultas.values())
+
+
+# ---------------------------------------------------------------------------------- origen opcional `cnmc`
+
+CNMC_SQL = (
+    "SELECT * FROM (VALUES ('2025-T1', 'RENFE', 600000, 800000), ('2025-T1', 'IRYO', 400000, NULL)) "
+    "t(trimestre, operador, viajeros, plazas_ofertadas)"
+)
+
+
+def test_el_origen_cnmc_es_opcional_y_sin_el_las_entradas_lo_dejan_en_none(lake):
+    layout, con = lake
+
+    assert cargar_entradas(CONSULTAS, layout, con, env={}).cnmc is None
+
+
+def test_con_el_origen_cnmc_se_carga_por_operador_con_el_contrato(lake):
+    layout, con = lake
+
+    cnmc = cargar_entradas(dict(CONSULTAS, cnmc=CNMC_SQL), layout, con, env={}).cnmc
+
+    assert list(cnmc.columns) == ["trimestre", "operador", "viajeros", "plazas_ofertadas"]
+    assert list(cnmc["viajeros"]) == [600_000, 400_000]
+    assert cnmc["plazas_ofertadas"].isna().sum() == 1  # las plazas pueden faltar (la CNMC no las da antes de 2018)
+
+
+def test_el_origen_cnmc_con_otras_columnas_falla_con_el_nombre_del_origen(lake):
+    layout, con = lake
+
+    with pytest.raises(EntradaError, match="origen 'cnmc'.*columnas"):
+        cargar_entradas(dict(CONSULTAS, cnmc="SELECT '2025-T1' AS trimestre, 1 AS viajeros"), layout, con, env={})
+
+
+def test_cargar_config_lee_el_origen_cnmc_si_esta_y_no_lo_exige(tmp_path):
+    base = {n: {"sql": s} for n, s in CONSULTAS.items()}
+    sin = tmp_path / "sin.yml"
+    sin.write_text(yaml.safe_dump({"origenes": base}), encoding="utf-8")
+    con = tmp_path / "con.yml"
+    con.write_text(yaml.safe_dump({"origenes": {**base, "cnmc": {"sql": CNMC_SQL}}}), encoding="utf-8")
+
+    assert "cnmc" not in cargar_config(sin)
+    assert cargar_config(con)["cnmc"] == CNMC_SQL
+
+
+def test_cargar_trimestrales_solo_necesita_ese_origen(lake):
+    layout, con = lake
+
+    assert cargar_trimestrales({"trimestrales": CONSULTAS["trimestrales"]}, layout, con, env={}) == {
+        Trimestre(2025, 1): 1_000_000, Trimestre(2025, 2): 650_000,
+    }

@@ -91,3 +91,25 @@ def test_los_nombres_antiguos_de_los_targets_ya_no_existen(antiguo):
     resultado = subprocess.run(["make", "-n", antiguo], cwd=RAIZ, capture_output=True, text=True)
 
     assert resultado.returncode != 0 and "No rule to make target" in resultado.stderr
+
+
+# ---------------------------------------------------------------------------------- datos de la CNMC antes de predecir
+
+def test_07_prediccion_asegura_los_datos_de_la_cnmc_antes_de_predecir():
+    salida = _receta()
+
+    assert "scripts/carga_e2e.py" in salida and "--asegurar-cnmc --trimestre 2026-T4" in salida
+    assert salida.index("--asegurar-cnmc") < salida.index("-m raillytics.prediccion --trimestre 2026-T4")
+
+
+def test_pred_cnmc_no_omite_la_comprobacion():
+    salida = _receta(PRED_CNMC="no")
+
+    assert "--asegurar-cnmc" not in salida and "-m raillytics.prediccion --trimestre 2026-T4" in salida
+
+
+def test_la_comprobacion_no_se_lanza_de_verdad_con_make_n():
+    # Una receta con $(MAKE) se ejecuta incluso con -n (ver E2E_MAKE): la comprobación podría arrancar la descarga.
+    assert "make -n" not in _make_n("07_prediccion", "TRIMESTRE=2026-T4") and "$(MAKE)" not in (RAIZ / "Makefile").read_text(
+        encoding="utf-8"
+    ).split("07_prediccion:")[1].split("\n\n")[0]
