@@ -1,0 +1,327 @@
+table_name: lineage_reglas
+main_dttm_col: evaluada
+description: Reglas de calidad de cada nodo con su último resultado; las declaradas que nunca se evaluaron figuran «sin evaluar».
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: null
+catalog: null
+sql: |-
+  -- Lineage · cada regla de calidad con su último resultado: las declaradas en config/quality_gates.yml (aunque nunca se hayan evaluado)
+  -- y las que solo existen en código (los gates de fichero de la descarga, el de L1 y los de L2).
+  -- Se genera con `make lineage` (raillytics.lineage): no lo edites a mano.
+  WITH declaradas(nodo, gate, tipo, severidad, descripcion) AS (VALUES
+      ('gold:dim_estacion', 'clave_unica', 'unico', 'bloqueante', 'sin duplicados por estacion_id'),
+      ('gold:dim_estacion', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('gold:dim_estacion', 'sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en estacion_id, nombre'),
+      ('gold:dim_fecha', 'clave_unica', 'unico', 'bloqueante', 'sin duplicados por fecha_id'),
+      ('gold:dim_fecha', 'dia_semana_valido', 'rango', 'bloqueante', 'dia_semana ≥ 1 y ≤ 7'),
+      ('gold:dim_fecha', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('gold:dim_fecha', 'sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en fecha_id, fecha, anio, trimestre, mes, dia_semana, es_festivo, estacion_anio'),
+      ('gold:dim_linea', 'clave_unica', 'unico', 'bloqueante', 'sin duplicados por linea_id'),
+      ('gold:dim_linea', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('gold:dim_linea', 'sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en linea_id, nombre, tipo_tren'),
+      ('gold:dim_operador', 'clave_unica', 'unico', 'bloqueante', 'sin duplicados por operador_id'),
+      ('gold:dim_operador', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('gold:dim_operador', 'sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en operador_id, nombre, empresa, segmento'),
+      ('gold:fact_mercado_trimestral', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, trimestre, fecha_inicio, linea_id, operador_id'),
+      ('gold:fact_mercado_trimestral', 'filas_conciliadas', 'sql', 'bloqueante', 'consulta SQL · filas conciliadas'),
+      ('gold:fact_mercado_trimestral', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 5 filas'),
+      ('gold:fact_mercado_trimestral', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, trimestre, operador_id'),
+      ('gold:fact_mercado_trimestral', 'lineas_en_dim_linea', 'referencia', 'bloqueante', 'linea_id existen en gold_dim_linea'),
+      ('gold:fact_mercado_trimestral', 'operadores_en_dim_operador', 'sql', 'bloqueante', 'consulta SQL · operadores en dim operador'),
+      ('gold:fact_mercado_trimestral', 'sin_operadores_otro', 'sql', 'aviso', 'consulta SQL · sin operadores otro'),
+      ('gold:fact_mercado_trimestral', 'viajeros_conciliados', 'sql', 'bloqueante', 'consulta SQL · viajeros conciliados'),
+      ('gold:fact_precio_mensual', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, mes, fecha_inicio, linea_id, operador_id, precio_medio_eur'),
+      ('gold:fact_precio_mensual', 'filas_conciliadas', 'sql', 'bloqueante', 'consulta SQL · filas conciliadas'),
+      ('gold:fact_precio_mensual', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 5 filas'),
+      ('gold:fact_precio_mensual', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, mes, operador_id'),
+      ('gold:fact_precio_mensual', 'lineas_en_dim_linea', 'referencia', 'bloqueante', 'linea_id existen en gold_dim_linea'),
+      ('gold:fact_precio_mensual', 'operadores_en_dim_operador', 'sql', 'bloqueante', 'consulta SQL · operadores en dim operador'),
+      ('gold:fact_precio_trimestral', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, trimestre, fecha_inicio, linea_id, operador_id, precio_medio_eur'),
+      ('gold:fact_precio_trimestral', 'filas_conciliadas', 'sql', 'bloqueante', 'consulta SQL · filas conciliadas'),
+      ('gold:fact_precio_trimestral', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 5 filas'),
+      ('gold:fact_precio_trimestral', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, trimestre, operador_id'),
+      ('gold:fact_precio_trimestral', 'lineas_en_dim_linea', 'referencia', 'bloqueante', 'linea_id existen en gold_dim_linea'),
+      ('gold:fact_precio_trimestral', 'operadores_en_dim_operador', 'sql', 'bloqueante', 'consulta SQL · operadores en dim operador'),
+      ('gold:fact_puntualidad', 'estaciones_en_dim_estacion', 'referencia', 'aviso', 'estacion_id existen en gold_dim_estacion'),
+      ('gold:fact_puntualidad', 'fechas_en_dim_fecha', 'referencia', 'bloqueante', 'fecha_id existen en gold_dim_fecha'),
+      ('gold:fact_puntualidad', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('gold:fact_puntualidad', 'lineas_en_dim_linea', 'referencia', 'bloqueante', 'linea_id existen en gold_dim_linea'),
+      ('gold:fact_puntualidad', 'operadores_en_dim_operador', 'referencia', 'bloqueante', 'operador_id existen en gold_dim_operador'),
+      ('gold:fact_puntualidad', 'puntualidad_coherente', 'sql', 'bloqueante', 'consulta SQL · puntualidad coherente'),
+      ('gold:fact_puntualidad', 'servicio_unico', 'unico', 'bloqueante', 'sin duplicados por servicio_id'),
+      ('gold:fact_puntualidad', 'sin_perdida_desde_silver', 'sql', 'bloqueante', 'consulta SQL · sin perdida desde silver'),
+      ('gold:fact_viajeros', 'estaciones_en_dim_estacion', 'referencia', 'bloqueante', 'estacion_id existen en gold_dim_estacion'),
+      ('gold:fact_viajeros', 'fechas_en_dim_fecha', 'referencia', 'bloqueante', 'fecha_id existen en gold_dim_fecha'),
+      ('gold:fact_viajeros', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('gold:fact_viajeros', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por fecha_id, estacion_id, linea_id, operador_id'),
+      ('gold:fact_viajeros', 'lineas_en_dim_linea', 'referencia', 'bloqueante', 'linea_id existen en gold_dim_linea'),
+      ('gold:fact_viajeros', 'operadores_en_dim_operador', 'referencia', 'bloqueante', 'operador_id existen en gold_dim_operador'),
+      ('gold:fact_viajeros', 'sin_perdida_desde_silver', 'sql', 'bloqueante', 'consulta SQL · sin perdida desde silver'),
+      ('gold:fact_viajeros', 'viajeros_conciliados', 'sql', 'bloqueante', 'consulta SQL · viajeros conciliados'),
+      ('silver:cnmc_precio_mensual', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, mes, fecha_inicio, trayecto, empresa, precio_medio_eur'),
+      ('silver:cnmc_precio_mensual', 'empresas_conocidas', 'sql', 'aviso', 'consulta SQL · empresas conocidas'),
+      ('silver:cnmc_precio_mensual', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 500 filas'),
+      ('silver:cnmc_precio_mensual', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, mes, trayecto, empresa'),
+      ('silver:cnmc_precio_mensual', 'madrid_barcelona_presente', 'sql', 'bloqueante', 'consulta SQL · madrid barcelona presente'),
+      ('silver:cnmc_precio_mensual', 'mes_valido', 'rango', 'bloqueante', 'mes ≥ 1 y ≤ 12'),
+      ('silver:cnmc_precio_mensual', 'precio_razonable', 'rango', 'bloqueante', 'precio_medio_eur ≥ 0.01 y ≤ 500'),
+      ('silver:cnmc_precio_mensual', 'serie_actualizada', 'sql', 'aviso', 'consulta SQL · serie actualizada'),
+      ('silver:cnmc_precio_trimestral', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, trimestre, fecha_inicio, trayecto, empresa, precio_medio_eur'),
+      ('silver:cnmc_precio_trimestral', 'empresas_conocidas', 'sql', 'aviso', 'consulta SQL · empresas conocidas'),
+      ('silver:cnmc_precio_trimestral', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 150 filas'),
+      ('silver:cnmc_precio_trimestral', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, trimestre, trayecto, empresa'),
+      ('silver:cnmc_precio_trimestral', 'madrid_barcelona_presente', 'sql', 'bloqueante', 'consulta SQL · madrid barcelona presente'),
+      ('silver:cnmc_precio_trimestral', 'precio_razonable', 'rango', 'bloqueante', 'precio_medio_eur ≥ 0.01 y ≤ 500'),
+      ('silver:cnmc_precio_trimestral', 'serie_actualizada', 'sql', 'aviso', 'consulta SQL · serie actualizada'),
+      ('silver:cnmc_precio_trimestral', 'trimestre_valido', 'rango', 'bloqueante', 'trimestre ≥ 1 y ≤ 4'),
+      ('silver:cnmc_trimestral', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, trimestre, fecha_inicio, corredor, empresa'),
+      ('silver:cnmc_trimestral', 'corredor_madrid_barcelona_presente', 'sql', 'bloqueante', 'consulta SQL · corredor madrid barcelona presente'),
+      ('silver:cnmc_trimestral', 'empresas_conocidas', 'sql', 'aviso', 'consulta SQL · empresas conocidas'),
+      ('silver:cnmc_trimestral', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 300 filas'),
+      ('silver:cnmc_trimestral', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, trimestre, corredor, empresa'),
+      ('silver:cnmc_trimestral', 'serie_actualizada', 'sql', 'aviso', 'consulta SQL · serie actualizada'),
+      ('silver:cnmc_trimestral', 'serie_sin_huecos', 'sql', 'aviso', 'consulta SQL · serie sin huecos'),
+      ('silver:cnmc_trimestral', 'trimestre_valido', 'rango', 'bloqueante', 'trimestre ≥ 1 y ≤ 4'),
+      ('silver:cnmc_trimestral', 'viajeros_por_plaza_razonable', 'sql', 'aviso', 'consulta SQL · viajeros por plaza razonable'),
+      ('silver:cnmc_trimestral', 'volumen_en_operadores_e_ingresos_en_total', 'sql', 'aviso', 'consulta SQL · volumen en operadores e ingresos en total'),
+      ('silver:cnmc_trimestral', 'volumenes_no_negativos', 'sql', 'bloqueante', 'consulta SQL · volumenes no negativos'),
+      ('silver:cnmc_viajeros_corredor', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, trimestre, fecha_inicio, corredor, empresa, viajeros_millones'),
+      ('silver:cnmc_viajeros_corredor', 'corredor_madrid_barcelona_presente', 'sql', 'bloqueante', 'consulta SQL · corredor madrid barcelona presente'),
+      ('silver:cnmc_viajeros_corredor', 'empresas_conocidas', 'sql', 'aviso', 'consulta SQL · empresas conocidas'),
+      ('silver:cnmc_viajeros_corredor', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 190 filas'),
+      ('silver:cnmc_viajeros_corredor', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, trimestre, corredor, empresa'),
+      ('silver:cnmc_viajeros_corredor', 'serie_actualizada', 'sql', 'aviso', 'consulta SQL · serie actualizada'),
+      ('silver:cnmc_viajeros_corredor', 'trimestre_valido', 'rango', 'bloqueante', 'trimestre ≥ 1 y ≤ 4'),
+      ('silver:cnmc_viajeros_corredor', 'volumenes_no_negativos', 'sql', 'bloqueante', 'consulta SQL · volumenes no negativos'),
+      ('silver:cnmc_viajeros_producto', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en anio, trimestre, fecha_inicio, tipo_producto, viajeros_millones'),
+      ('silver:cnmc_viajeros_producto', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 120 filas'),
+      ('silver:cnmc_viajeros_producto', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por anio, trimestre, tipo_producto'),
+      ('silver:cnmc_viajeros_producto', 'ld_av_presente', 'sql', 'bloqueante', 'consulta SQL · ld av presente'),
+      ('silver:cnmc_viajeros_producto', 'productos_conocidos', 'dominio', 'aviso', 'tipo_producto dentro de Cercanías, LD AV, LD Convencional, MD AV, MD Convencional'),
+      ('silver:cnmc_viajeros_producto', 'serie_actualizada', 'sql', 'aviso', 'consulta SQL · serie actualizada'),
+      ('silver:cnmc_viajeros_producto', 'trimestre_valido', 'rango', 'bloqueante', 'trimestre ≥ 1 y ≤ 4'),
+      ('silver:cnmc_viajeros_producto', 'volumenes_no_negativos', 'sql', 'bloqueante', 'consulta SQL · volumenes no negativos'),
+      ('silver:puntualidad_enriquecida', 'cancelado_sin_retraso', 'sql', 'bloqueante', 'consulta SQL · cancelado sin retraso'),
+      ('silver:puntualidad_enriquecida', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en fecha, servicio_id, linea_id, operador_id, estacion_id, hora_prevista, estado'),
+      ('silver:puntualidad_enriquecida', 'estaciones_en_viajeros', 'referencia', 'aviso', 'estacion_id existen en silver_viajeros_enriquecidos'),
+      ('silver:puntualidad_enriquecida', 'estado_valido', 'dominio', 'bloqueante', 'estado dentro de realizado, cancelado'),
+      ('silver:puntualidad_enriquecida', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('silver:puntualidad_enriquecida', 'hora_prevista_del_dia', 'sql', 'aviso', 'consulta SQL · hora prevista del dia'),
+      ('silver:puntualidad_enriquecida', 'hora_real_posterior', 'sql', 'bloqueante', 'consulta SQL · hora real posterior'),
+      ('silver:puntualidad_enriquecida', 'lineas_en_viajeros', 'referencia', 'bloqueante', 'linea_id existen en silver_viajeros_enriquecidos'),
+      ('silver:puntualidad_enriquecida', 'operadores_en_viajeros', 'referencia', 'bloqueante', 'operador_id existen en silver_viajeros_enriquecidos'),
+      ('silver:puntualidad_enriquecida', 'realizado_con_retraso', 'sql', 'bloqueante', 'consulta SQL · realizado con retraso'),
+      ('silver:puntualidad_enriquecida', 'retraso_no_negativo', 'rango', 'bloqueante', 'retraso_min ≥ 0'),
+      ('silver:puntualidad_enriquecida', 'servicio_unico', 'unico', 'bloqueante', 'sin duplicados por servicio_id'),
+      ('silver:viajeros_enriquecidos', 'atributos_estacion_sin_nulos', 'no_nulos', 'aviso', 'sin nulos en estacion_nombre, provincia, comunidad, latitud, longitud'),
+      ('silver:viajeros_enriquecidos', 'atributos_linea_sin_nulos', 'no_nulos', 'aviso', 'sin nulos en linea_nombre, tipo_tren, origen, destino'),
+      ('silver:viajeros_enriquecidos', 'atributos_operador_sin_nulos', 'no_nulos', 'aviso', 'sin nulos en operador_nombre, operador_empresa, operador_segmento'),
+      ('silver:viajeros_enriquecidos', 'claves_sin_nulos', 'no_nulos', 'bloqueante', 'sin nulos en fecha, estacion_id, linea_id, operador_id, viajeros'),
+      ('silver:viajeros_enriquecidos', 'condicion_meteo_valida', 'dominio', 'aviso', 'condicion_meteo dentro de despejado, nuboso, lluvia, tormenta'),
+      ('silver:viajeros_enriquecidos', 'coordenadas_en_espana', 'sql', 'aviso', 'consulta SQL · coordenadas en espana'),
+      ('silver:viajeros_enriquecidos', 'festivo_con_nombre', 'sql', 'aviso', 'consulta SQL · festivo con nombre'),
+      ('silver:viajeros_enriquecidos', 'filas_minimas', 'filas_min', 'bloqueante', 'al menos 1 filas'),
+      ('silver:viajeros_enriquecidos', 'grano_unico', 'unico', 'bloqueante', 'sin duplicados por fecha, estacion_id, linea_id, operador_id'),
+      ('silver:viajeros_enriquecidos', 'viajeros_no_negativos', 'rango', 'bloqueante', 'viajeros ≥ 0')),
+  gate AS (
+      SELECT CASE
+      WHEN proceso = 'bronze_download' THEN 'staging:' || tabla
+      WHEN proceso = 'bronze_l1_raw_uploader' THEN 'l1:' || tabla
+      WHEN proceso = 'bronze_l2_parquet_converter' THEN 'l2:' || split_part(tabla, '/', 1)
+      WHEN proceso = 'prediccion_demanda' THEN 'pred:' || tabla
+      WHEN starts_with(tabla, 'silver_') THEN 'silver:' || substr(tabla, 8)
+      WHEN starts_with(tabla, 'gold_') THEN 'gold:' || substr(tabla, 6)
+    END AS nodo, gate, tipo, severidad, resultado, valor, umbral, detalle, run_id,
+             timezone('Europe/Madrid', timezone('UTC', inicio)) AS inicio
+      FROM read_parquet('s3://raillytics-gold/_trazabilidad/calidad/*.parquet', union_by_name = true)
+  ),
+  -- Solo cuenta la ÚLTIMA evaluación de cada regla de cada nodo.
+  gate_ultima AS (SELECT * FROM gate WHERE nodo IS NOT NULL QUALIFY row_number() OVER (PARTITION BY nodo, gate ORDER BY inicio DESC) = 1),
+  resumen_gates AS (
+      SELECT nodo, count(*) AS gates_total,
+             sum(CASE WHEN resultado = 'ok' THEN 1 ELSE 0 END) AS gates_ok,
+             sum(CASE WHEN resultado <> 'ok' AND severidad = 'bloqueante' THEN 1 ELSE 0 END) AS gates_fallidos,
+             sum(CASE WHEN resultado <> 'ok' AND severidad <> 'bloqueante' THEN 1 ELSE 0 END) AS gates_aviso
+      FROM gate_ultima GROUP BY nodo
+  )
+  SELECT
+      coalesce(d.nodo, q.nodo) AS nodo,
+      coalesce(d.gate, q.gate) AS gate,
+      coalesce(d.tipo, q.tipo) AS tipo,
+      coalesce(d.severidad, q.severidad) AS severidad,
+      coalesce(d.descripcion, '(regla definida en código)') AS regla,
+      coalesce(q.resultado, 'sin evaluar') AS resultado,
+      q.valor, q.umbral, q.detalle, q.inicio AS evaluada, q.run_id
+  FROM declaradas d
+  FULL OUTER JOIN gate_ultima q ON q.nodo = d.nodo AND q.gate = d.gate
+  ORDER BY 1, 2
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 73cd1b35-0a39-57c0-bcfe-1d49d3a76ad4
+metrics:
+- metric_name: n_reglas
+  verbose_name: Reglas
+  metric_type: null
+  expression: COUNT(*)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: n_fallidas
+  verbose_name: Reglas fallidas
+  metric_type: null
+  expression: SUM(CASE WHEN resultado NOT IN ('ok', 'sin evaluar') THEN 1 ELSE 0 END)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: n_sin_evaluar
+  verbose_name: Reglas sin evaluar
+  metric_type: null
+  expression: SUM(CASE WHEN resultado = 'sin evaluar' THEN 1 ELSE 0 END)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+columns:
+- column_name: nodo
+  verbose_name: Nodo
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: gate
+  verbose_name: Regla
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: tipo
+  verbose_name: Tipo
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: severidad
+  verbose_name: Severidad
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: regla
+  verbose_name: Qué comprueba
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: resultado
+  verbose_name: Resultado
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: valor
+  verbose_name: Valor
+  is_dttm: false
+  is_active: true
+  type: DOUBLE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: umbral
+  verbose_name: Umbral
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: detalle
+  verbose_name: Detalle
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: evaluada
+  verbose_name: Última evaluación
+  is_dttm: true
+  is_active: true
+  type: TIMESTAMP
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: run_id
+  verbose_name: Ejecución
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+version: 1.0.0
+database_uuid: c34b683c-9913-5c2c-b6a6-7d986acb824b

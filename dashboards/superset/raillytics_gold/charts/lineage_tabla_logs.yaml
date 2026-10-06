@@ -1,0 +1,68 @@
+slice_name: Logs de las descargas (Airflow)
+description: Enlace a la tarea de Airflow de cada descarga (pestaña de logs). Solo las descargas pasan por Airflow.
+certified_by: null
+certification_details: null
+viz_type: table
+params:
+  viz_type: table
+  query_mode: raw
+  groupby: []
+  metrics: []
+  percent_metrics: []
+  row_limit: 1000
+  server_page_length: 10
+  include_search: true
+  show_totals: false
+  table_timestamp_format: '%Y-%m-%d %H:%M:%S'
+  show_cell_bars: false
+  color_pn: false
+  column_config: {}
+  temporal_columns_lookup: {}
+  time_grain_sqla: null
+  adhoc_filters:
+  - clause: WHERE
+    expressionType: SQL
+    sqlExpression: enlace_log IS NOT NULL
+  all_columns:
+  - inicio
+  - proceso
+  - destino
+  - estado
+  - enlace_log
+  order_by_cols:
+  - '["inicio", false]'
+  allow_render_html: true
+  conditional_formatting:
+  - column: estado
+    operator: ==
+    targetValue: error
+    colorScheme: '#EFA1AA'
+  - column: estado
+    operator: ==
+    targetValue: fallo
+    colorScheme: '#EFA1AA'
+  - column: estado
+    operator: ==
+    targetValue: aviso
+    colorScheme: '#FDE380'
+  - column: estado
+    operator: ==
+    targetValue: ok
+    colorScheme: '#ACE1C4'
+  - column: estado
+    operator: ==
+    targetValue: sin ejecutar
+    colorScheme: '#D9D9D9'
+  - column: estado
+    operator: ==
+    targetValue: sin evaluar
+    colorScheme: '#D9D9D9'
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 01ee5866-11ad-5e0b-a176-eae5e3b47ae0
+version: 1.0.0
+dataset_uuid: 45d4e157-5b7d-575e-bcf0-3b007373d7a4
+is_managed_externally: false
+external_url: null

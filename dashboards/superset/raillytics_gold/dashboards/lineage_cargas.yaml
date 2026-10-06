@@ -1,0 +1,535 @@
+dashboard_title: Lineage de cargas
+description: 'Grafo de lineage de las cargas del lake: de la fuente al dashboard, con la transformación de cada salto, la capa y tabla, las reglas de calidad y sus resultados, y los errores y logs de cada ejecución. El grafo sale del repositorio (make lineage) y se cruza con s3://raillytics-gold/_trazabilidad/.'
+css: ''
+slug: lineage-cargas
+uuid: 03b58b7f-535b-5a6a-b346-a39bb5edfee5
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+    - GRID_ID
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children:
+    - ROW-intro
+    - ROW-kpis
+    - ROW-sankey
+    - ROW-grafo
+    - ROW-nodos
+    - ROW-tabla_nodos
+    - ROW-reglas
+    - ROW-tabla_reglas
+    - ROW-carga
+    - ROW-grafo_carga
+    - ROW-tabla_cargas
+    - ROW-tabla_logs
+    parents:
+    - ROOT_ID
+  HEADER_ID:
+    id: HEADER_ID
+    type: HEADER
+    meta:
+      text: Lineage de cargas
+  MARKDOWN-intro:
+    type: MARKDOWN
+    id: MARKDOWN-intro
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-intro
+    meta:
+      width: 12
+      height: 22
+      code: '### Cómo leerlo
+
+        Cada **nodo** es una fuente, un fichero o tabla de una capa (staging, Bronze L1/L2, Silver, Gold), la predicción, un dataset o un dashboard. Cada **flecha** es una transformación (descarga HTTP, copia a MinIO, CSV→Parquet, SQL de Silver o Gold, dataset…) y su grosor crece con las filas de la última carga. El grafo sale del propio repositorio (`make lineage`) y se cruza con lo que de verdad se cargó (`_trazabilidad`): un nodo declarado que nunca se ha ejecutado figura como **sin ejecutar**. Más abajo: estado de cada nodo, reglas de calidad con su último resultado, las ejecuciones con su error y los enlaces a los logs de Airflow.'
+  ROW-intro:
+    type: ROW
+    id: ROW-intro
+    children:
+    - MARKDOWN-intro
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_kpi_nodos:
+    type: CHART
+    id: CHART-lineage_kpi_nodos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 101
+      uuid: a913a93a-c409-5291-8c06-1c63e6101052
+      sliceName: Nodos del grafo
+  CHART-lineage_kpi_con_error:
+    type: CHART
+    id: CHART-lineage_kpi_con_error
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 102
+      uuid: b106e690-aaa8-55f6-849f-62cf26b31d7a
+      sliceName: Nodos con error
+  CHART-lineage_kpi_sin_ejecutar:
+    type: CHART
+    id: CHART-lineage_kpi_sin_ejecutar
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 103
+      uuid: a0bc39c5-38c2-5dfc-9e44-4e766a439773
+      sliceName: Nodos sin ejecutar
+  CHART-lineage_kpi_gates_fallidos:
+    type: CHART
+    id: CHART-lineage_kpi_gates_fallidos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 104
+      uuid: bb3d8104-5893-586c-909e-9af25faef400
+      sliceName: Gates bloqueantes fallidos
+  ROW-kpis:
+    type: ROW
+    id: ROW-kpis
+    children:
+    - CHART-lineage_kpi_nodos
+    - CHART-lineage_kpi_con_error
+    - CHART-lineage_kpi_sin_ejecutar
+    - CHART-lineage_kpi_gates_fallidos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_sankey:
+    type: CHART
+    id: CHART-lineage_sankey
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-sankey
+    meta:
+      width: 12
+      height: 130
+      chartId: 105
+      uuid: 73404d5f-871b-51ad-81a8-d96450c6c3c5
+      sliceName: 'Flujo de datos: de la fuente al dashboard'
+  ROW-sankey:
+    type: ROW
+    id: ROW-sankey
+    children:
+    - CHART-lineage_sankey
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_grafo:
+    type: CHART
+    id: CHART-lineage_grafo
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-grafo
+    meta:
+      width: 12
+      height: 120
+      chartId: 106
+      uuid: 4f92b4a1-8a10-5ccc-ab24-f9f213734b16
+      sliceName: Mapa de lineage (arrastra los nodos, rueda para ampliar)
+  ROW-grafo:
+    type: ROW
+    id: ROW-grafo
+    children:
+    - CHART-lineage_grafo
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  MARKDOWN-nodos:
+    type: MARKDOWN
+    id: MARKDOWN-nodos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-nodos
+    meta:
+      width: 12
+      height: 14
+      code: '### Qué hay en cada nodo: estado, última carga y gates'
+  ROW-nodos:
+    type: ROW
+    id: ROW-nodos
+    children:
+    - MARKDOWN-nodos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_tabla_nodos:
+    type: CHART
+    id: CHART-lineage_tabla_nodos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-tabla_nodos
+    meta:
+      width: 12
+      height: 90
+      chartId: 108
+      uuid: 28b5b85d-0515-5153-a50c-d12926286828
+      sliceName: Nodos y estado de su última carga
+  ROW-tabla_nodos:
+    type: ROW
+    id: ROW-tabla_nodos
+    children:
+    - CHART-lineage_tabla_nodos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  MARKDOWN-reglas:
+    type: MARKDOWN
+    id: MARKDOWN-reglas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-reglas
+    meta:
+      width: 12
+      height: 14
+      code: '### Reglas de calidad (filtra por «Nodo»)'
+  ROW-reglas:
+    type: ROW
+    id: ROW-reglas
+    children:
+    - MARKDOWN-reglas
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_tabla_reglas:
+    type: CHART
+    id: CHART-lineage_tabla_reglas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-tabla_reglas
+    meta:
+      width: 12
+      height: 80
+      chartId: 109
+      uuid: 0a95eb18-4ae9-597e-994e-44554f4e3e46
+      sliceName: Reglas de calidad (último resultado)
+  ROW-tabla_reglas:
+    type: ROW
+    id: ROW-tabla_reglas
+    children:
+    - CHART-lineage_tabla_reglas
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  MARKDOWN-carga:
+    type: MARKDOWN
+    id: MARKDOWN-carga
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-carga
+    meta:
+      width: 12
+      height: 14
+      code: '### Zoom por carga: elige una o varias ejecuciones en el filtro «Ejecución»'
+  ROW-carga:
+    type: ROW
+    id: ROW-carga
+    children:
+    - MARKDOWN-carga
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_grafo_carga:
+    type: CHART
+    id: CHART-lineage_grafo_carga
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-grafo_carga
+    meta:
+      width: 12
+      height: 110
+      chartId: 107
+      uuid: 8c451113-aaf5-51e3-8da0-eec82d556df2
+      sliceName: Recorrido de la(s) ejecución(es) seleccionada(s)
+  ROW-grafo_carga:
+    type: ROW
+    id: ROW-grafo_carga
+    children:
+    - CHART-lineage_grafo_carga
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_tabla_cargas:
+    type: CHART
+    id: CHART-lineage_tabla_cargas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-tabla_cargas
+    meta:
+      width: 12
+      height: 90
+      chartId: 110
+      uuid: 9e93c85c-d9ce-573d-be8a-ebc9ef5e787f
+      sliceName: Ejecuciones y errores
+  ROW-tabla_cargas:
+    type: ROW
+    id: ROW-tabla_cargas
+    children:
+    - CHART-lineage_tabla_cargas
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-lineage_tabla_logs:
+    type: CHART
+    id: CHART-lineage_tabla_logs
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-tabla_logs
+    meta:
+      width: 12
+      height: 60
+      chartId: 111
+      uuid: 01ee5866-11ad-5e0b-a176-eae5e3b47ae0
+      sliceName: Logs de las descargas (Airflow)
+  ROW-tabla_logs:
+    type: ROW
+    id: ROW-tabla_logs
+    children:
+    - CHART-lineage_tabla_logs
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  timed_refresh_immune_slices: []
+  expanded_slices: {}
+  label_colors: {}
+  default_filters: '{}'
+  cross_filters_enabled: true
+  native_filter_configuration:
+  - id: NATIVE_FILTER-lineage-capa
+    name: Capa
+    filterType: filter_select
+    targets:
+    - datasetUuid: a463e9cc-8283-5f2d-801f-475d1f3fc80d
+      column:
+        name: capa
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 105
+      - 106
+      - 107
+      - 109
+      - 110
+      - 111
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-lineage-estado
+    name: Estado
+    filterType: filter_select
+    targets:
+    - datasetUuid: a463e9cc-8283-5f2d-801f-475d1f3fc80d
+      column:
+        name: estado
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 105
+      - 106
+      - 107
+      - 109
+      - 110
+      - 111
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-lineage-nodo
+    name: Nodo (reglas)
+    filterType: filter_select
+    targets:
+    - datasetUuid: 73cd1b35-0a39-57c0-bcfe-1d49d3a76ad4
+      column:
+        name: nodo
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 101
+      - 102
+      - 103
+      - 104
+      - 105
+      - 106
+      - 107
+      - 108
+      - 110
+      - 111
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-lineage-run
+    name: Ejecución
+    filterType: filter_select
+    targets:
+    - datasetUuid: 45d4e157-5b7d-575e-bcf0-3b007373d7a4
+      column:
+        name: run_id
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 101
+      - 102
+      - 103
+      - 104
+      - 105
+      - 106
+      - 108
+      - 109
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-lineage-proceso
+    name: Proceso
+    filterType: filter_select
+    targets:
+    - datasetUuid: 45d4e157-5b7d-575e-bcf0-3b007373d7a4
+      column:
+        name: proceso
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 101
+      - 102
+      - 103
+      - 104
+      - 105
+      - 106
+      - 108
+      - 109
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+version: 1.0.0
+is_managed_externally: false
+external_url: null
+certified_by: null
+certification_details: null
+published: true

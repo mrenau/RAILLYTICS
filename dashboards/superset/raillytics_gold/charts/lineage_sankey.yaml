@@ -1,0 +1,22 @@
+slice_name: 'Flujo de datos: de la fuente al dashboard'
+description: Cada banda es un salto (descarga, copia, Parquet, SQL de Silver o Gold, dataset…). El grosor crece con las filas de la última carga (escala logarítmica).
+certified_by: null
+certification_details: null
+viz_type: sankey_v2
+params:
+  viz_type: sankey_v2
+  adhoc_filters: []
+  source: origen
+  target: destino
+  metric: peso_total
+  row_limit: 1000
+  color_scheme: supersetColors
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 73404d5f-871b-51ad-81a8-d96450c6c3c5
+version: 1.0.0
+dataset_uuid: 18e7f5b3-80c6-5e9a-80e9-4a0e759fe715
+is_managed_externally: false
+external_url: null

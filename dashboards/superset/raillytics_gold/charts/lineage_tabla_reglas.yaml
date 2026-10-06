@@ -1,0 +1,70 @@
+slice_name: Reglas de calidad (último resultado)
+description: Las declaradas en config/quality_gates.yml (aunque nunca se hayan evaluado) y las definidas en código (descarga, L1, L2). Filtra por «Nodo».
+certified_by: null
+certification_details: null
+viz_type: table
+params:
+  viz_type: table
+  query_mode: raw
+  groupby: []
+  metrics: []
+  percent_metrics: []
+  row_limit: 1000
+  server_page_length: 10
+  include_search: true
+  show_totals: false
+  table_timestamp_format: '%Y-%m-%d %H:%M:%S'
+  show_cell_bars: false
+  color_pn: false
+  column_config: {}
+  temporal_columns_lookup: {}
+  time_grain_sqla: null
+  adhoc_filters: []
+  all_columns:
+  - nodo
+  - gate
+  - severidad
+  - resultado
+  - regla
+  - valor
+  - umbral
+  - evaluada
+  - detalle
+  order_by_cols:
+  - '["nodo", true]'
+  - '["gate", true]'
+  allow_render_html: false
+  conditional_formatting:
+  - column: resultado
+    operator: ==
+    targetValue: error
+    colorScheme: '#EFA1AA'
+  - column: resultado
+    operator: ==
+    targetValue: fallo
+    colorScheme: '#EFA1AA'
+  - column: resultado
+    operator: ==
+    targetValue: aviso
+    colorScheme: '#FDE380'
+  - column: resultado
+    operator: ==
+    targetValue: ok
+    colorScheme: '#ACE1C4'
+  - column: resultado
+    operator: ==
+    targetValue: sin ejecutar
+    colorScheme: '#D9D9D9'
+  - column: resultado
+    operator: ==
+    targetValue: sin evaluar
+    colorScheme: '#D9D9D9'
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 0a95eb18-4ae9-597e-994e-44554f4e3e46
+version: 1.0.0
+dataset_uuid: 73cd1b35-0a39-57c0-bcfe-1d49d3a76ad4
+is_managed_externally: false
+external_url: null
