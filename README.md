@@ -564,15 +564,19 @@ El dashboard *Catálogo de datos y Glosario de términos* (`/superset/dashboard/
   - **Dashboards relacionados**: tableros de Superset donde se explota visualmente (`mercado-corredor`, `demanda-ferroviaria`, `puntualidad`, `trazabilidad-cargas`, `lineage-cargas`, etc.).
   - **Quality Gates asociados**: reglas de calidad (`quality_gates.yml`) que velan por la veracidad de la métrica.
   - **Red de términos relacionados**: vínculos cruzados conceptuales y jerárquicos entre términos del glosario.
+- **Red de Gobernanza (Grafo interactivo y Ficha de Concepto)**: visualización relacional en grafo de fuerzas (ECharts) que mapea de forma integral la red de relaciones entre conceptos, tablas, reglas de calidad y dashboards. Incluye:
+  - **Grafo interactivo**: nodos arrastrables y diferenciados por categoría cromática con filtrado cruzado nativo (`emit_filter: true`).
+  - **Ficha del Concepto**: panel detallado que expone la definición formal, fórmula de cálculo, sinónimos y badges interactivos con enlaces directos a dashboards y tablas.
+  - **Sincronización bidireccional**: seleccionar un concepto en el grafo o en el filtro nativo *Término de glosario* aísla automáticamente su subgrafo relacional y actualiza su ficha de gobernanza al instante.
 
-La información se define en `config/data_catalog.yml` y `config/glosario.yml`, y se genera como datasets de DuckDB para Superset (`data_catalog`, `catalogo_columnas`, `glosario_terminos`):
+La información se define en `config/data_catalog.yml` y `config/glosario.yml`, y se genera como datasets de DuckDB para Superset (`data_catalog`, `catalogo_columnas`, `glosario_terminos`, `catalogo_relaciones`):
 
 ```bash
 make metadata                # regenera tanto lineage como catálogo/glosario (o individualmente: make catalog / make lineage)
 make 06_superset-import      # y reimporta los dashboards en Superset
 ```
 
-Los tests unitarios (`tests/catalog/test_catalog.py`) comprueban la integridad referencial completa (que ningún término, regla o dashboard apunte a identificadores inexistentes) y aseguran que los datasets versionados coinciden exactamente con lo declarado.
+Los tests unitarios (`tests/catalog/test_catalog.py` y `tests/dashboards/test_dashboards_catalog.py`) comprueban la integridad referencial completa (que ningún término, regla o dashboard apunte a identificadores inexistentes), verifican la consistencia de los 13 gráficos y aseguran que los datasets versionados coinciden exactamente con lo declarado.
 
 ---
 
