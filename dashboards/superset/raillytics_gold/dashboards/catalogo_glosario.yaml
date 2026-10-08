@@ -342,6 +342,7 @@ position:
     children:
     - ROW-grafo-intro
     - ROW-grafo-view
+    - ROW-grafo-ficha
     meta:
       text: Red de Gobernanza
     parents:
@@ -363,7 +364,7 @@ position:
       height: 18
       code: '### Red Relacional de Gobernanza de Datos
 
-        Visualización interactiva que conecta los **Conceptos del Glosario** (negocio y técnicos) con los **Datasets del Catálogo**, las **Reglas de Calidad** y los **Dashboards de Superset**. Pasa el cursor por cualquier nodo para aislar sus aristas conectadas (qué tabla implementa el concepto, qué quality gates lo validan y en qué dashboard se visualiza). Haz clic y arrastra con suavidad o usa la rueda del ratón para ampliar.'
+        Visualización interactiva que conecta los **Conceptos del Glosario** (negocio y técnicos) con los **Datasets del Catálogo**, las **Reglas de Calidad** y los **Dashboards de Superset**. Haz clic en cualquier nodo o selecciona un término en el filtro **Término de glosario** para aislar su red y consultar su **definición oficial, fórmula y metadatos** en la ficha inferior. Usa la rueda del ratón para ampliar y arrastra el lienzo con suavidad.'
   ROW-grafo-intro:
     type: ROW
     id: ROW-grafo-intro
@@ -388,7 +389,7 @@ position:
     - ROW-grafo-view
     meta:
       width: 12
-      height: 120
+      height: 95
       chartId: 212
       uuid: 10000001-caca-5000-8000-000000000012
       sliceName: Red de gobernanza (conceptos, tablas, reglas y dashboards)
@@ -397,6 +398,34 @@ position:
     id: ROW-grafo-view
     children:
     - CHART-catalogo_grafo_gobernanza
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-grafo
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-glosario_ficha_termino:
+    type: CHART
+    id: CHART-glosario_ficha_termino
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-grafo
+    - ROW-grafo-ficha
+    meta:
+      width: 12
+      height: 60
+      chartId: 213
+      uuid: 10000001-caca-5000-8000-000000000013
+      sliceName: Ficha del concepto (definición, fórmula y gobernanza)
+  ROW-grafo-ficha:
+    type: ROW
+    id: ROW-grafo-ficha
+    children:
+    - CHART-glosario_ficha_termino
     parents:
     - ROOT_ID
     - GRID_ID
@@ -436,6 +465,7 @@ metadata:
       - 210
       - 211
       - 212
+      - 213
     controlValues:
       enableEmptyFilter: false
       defaultToFirstItem: false
@@ -467,6 +497,7 @@ metadata:
       - 210
       - 211
       - 212
+      - 213
     controlValues:
       enableEmptyFilter: false
       defaultToFirstItem: false
@@ -498,6 +529,7 @@ metadata:
       - 210
       - 211
       - 212
+      - 213
     controlValues:
       enableEmptyFilter: false
       defaultToFirstItem: false
@@ -577,6 +609,9 @@ metadata:
     - datasetUuid: 57fdcb35-8bd9-55e7-be70-d82e930b3e1c
       column:
         name: termino
+    - datasetUuid: 6f239f5f-a26a-55ef-bbe6-9efffbebc428
+      column:
+        name: termino
     defaultDataMask:
       extraFormData: {}
       filterState: {}
@@ -593,7 +628,6 @@ metadata:
       - 205
       - 206
       - 207
-      - 212
     controlValues:
       enableEmptyFilter: false
       defaultToFirstItem: false
