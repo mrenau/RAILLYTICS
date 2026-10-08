@@ -1,0 +1,260 @@
+table_name: data_catalog
+main_dttm_col: null
+description: Catálogo unificado de tablas del Data Lakehouse con metadatos de capa, dominio, grano, claves, proceso y reglas de calidad.
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: null
+catalog: null
+sql: |-
+  -- Catálogo de Datos de Raillytics: datasets declarados en config/data_catalog.yml
+  -- Se genera con `make catalog` (raillytics.catalog): no lo edites a mano.
+  WITH catalog_tablas(tabla, nombre, capa, orden_capa, dominio, descripcion, grano, claves, formato, proceso, frecuencia, quality_gates, upstream, downstream, n_columnas) AS (VALUES
+      ('cnmc_indicadores', 'Bronze CNMC Indicadores Globales', 'Bronze L2', 3, 'Ingesta y Fuentes Externas', 'Fichero CSV de indicadores trimestrales de transporte ferroviario publicado por el portal de datos abiertos de la CNMC.', 'Registro original del CSV fuente', 'Trimestre, Corredor, Empresa', 'Parquet (L2) / CSV (L1)', 'bronze_download -> raw_uploader -> parquet_converter', 'Trimestral', 'formato_declarado, min_bytes, min_filas, columnas_obligatorias', 'fuente:cnmc_indicadores', 'silver:cnmc_trimestral', 3),
+      ('crtm', 'Bronze CRTM Consorcio Madrid', 'Bronze L2', 3, 'Ingesta y Fuentes Externas', 'Archivo GTFS ZIP estático del Consorcio Regional de Transportes de Madrid con paradas, rutas y horarios.', 'Múltiples ficheros desglosados (stops, routes, trips, stop_times)', 'stop_id, route_id, trip_id', 'Parquet (L2) / ZIP (L1)', 'bronze_download -> raw_uploader -> parquet_converter', 'Mensual / Bajo demanda', 'formato_declarado, zip_valido', 'fuente:crtm', 'silver:viajeros_enriquecidos, gold:dim_linea', 2),
+      ('renfe_trip_updates', 'Bronze Renfe GTFS-RT Trip Updates', 'Bronze L2', 3, 'Ingesta y Fuentes Externas', 'Feed continuo JSON GTFS-RT de Renfe Operadora con previsiones y actualizaciones de tiempo de paso en vivo.', 'Una actualización de viaje y parada', 'trip_id, stop_sequence', 'Parquet (L2) / JSON (L1)', 'bronze_download -> raw_uploader -> parquet_converter', 'Continuo (Streaming)', 'formato_declarado, json_valido', 'fuente:renfe_trip_updates', 'silver:puntualidad_enriquecida', 2),
+      ('cnmc_precio_mensual', 'Silver CNMC Precios Mensuales', 'Silver', 4, 'Mercado y Tarifas', 'Registro de precios medios mensuales por trayecto y empresa normalizados a formato canónico.', 'Un mes, empresa, servicio, producto y trayecto', 'anio_mes, empresa, servicio, producto, trayecto', 'Delta Lake', 'silver_builder', 'Mensual', 'filas_minimas, no_nulos_claves, precios_positivos', 'l2:cnmc_precio_mensual', 'gold:fact_precio_mensual', 4),
+      ('cnmc_precio_trimestral', 'Silver CNMC Precios Trimestrales', 'Silver', 4, 'Mercado y Tarifas', 'Registro de precios medios trimestrales por trayecto comercial.', 'Un trimestre, empresa, servicio, producto y trayecto', 'trimestre, empresa, servicio, producto, trayecto', 'Delta Lake', 'silver_builder', 'Trimestral', 'filas_minimas, no_nulos_claves, precios_positivos', 'l2:cnmc_precio_trimestral', 'gold:fact_precio_trimestral', 4),
+      ('cnmc_trimestral', 'Silver CNMC Indicadores Trimestrales', 'Silver', 4, 'Mercado y Competencia', 'Datos depurados, deduplicados y tipados procedentes del informe trimestral oficial de la CNMC.', 'Un trimestre, producto, corredor, empresa y tipo de servicio', 'trimestre, producto, corredor, empresa, servicio', 'Delta Lake', 'silver_builder', 'Trimestral', 'filas_minimas, grano_unico, no_nulos_claves, serie_actualizada', 'l2:cnmc_indicadores', 'gold:fact_mercado_trimestral, gold:dim_operador', 8),
+      ('cnmc_viajeros_corredor', 'Silver CNMC Viajeros por Corredor', 'Silver', 4, 'Mercado y Competencia', 'Serie histórica trimestral de alta velocidad desglosada por corredor y operador.', 'Un trimestre, corredor y empresa', 'trimestre, corredor, empresa', 'Delta Lake', 'silver_builder', 'Trimestral', 'filas_minimas, grano_unico', 'l2:cnmc_viajeros_corredor', 'gold:fact_mercado_trimestral', 4),
+      ('cnmc_viajeros_producto', 'Silver CNMC Viajeros por Producto', 'Silver', 4, 'Mercado y Competencia', 'Serie histórica nacional de viajeros y plazas por segmento de producto (Cercanías, MD, LD).', 'Un trimestre y tipo de producto', 'trimestre, producto', 'Delta Lake', 'silver_builder', 'Trimestral', 'filas_minimas, grano_unico', 'l2:cnmc_viajeros_producto', 'dashboard:mercado-corredor', 3),
+      ('puntualidad_enriquecida', 'Silver Puntualidad Enriquecida', 'Silver', 4, 'Operaciones y Puntualidad', 'Tiempos de paso por estaciones y retrasos computados cruzando eventos GTFS-RT con horarios teóricos.', 'Un evento de parada de un servicio', 'servicio_id, fecha, estacion_id', 'Delta Lake', 'silver_sample / silver_builder', 'Streaming / Tiempo Real', 'filas_minimas, retraso_valido', 'l2:renfe_trip_updates, l2:renfe_vehicle_positions', 'gold:fact_puntualidad', 3),
+      ('viajeros_enriquecidos', 'Silver Viajeros Enriquecidos', 'Silver', 4, 'Demanda y Tráfico', 'Datos de viajeros por servicio con normalización de estaciones e imputación de variables meteorológicas y de calendario.', 'Un servicio ferroviario y fecha', 'servicio_id, fecha', 'Delta Lake', 'silver_sample / silver_builder', 'Streaming / Batch', 'filas_minimas, claves_validas', 'l2:renfe_trip_updates, l2:crtm', 'gold:fact_viajeros, gold:dim_estacion', 3),
+      ('dim_estacion', 'Dimensión Estación', 'Gold', 6, 'Infraestructura y Red', 'Maestro de estaciones ferroviarias con código Adif, ubicación geográfica, municipio y coordenadas lat/long.', 'Una estación de la red ferroviaria', 'id_estacion', 'Parquet', 'gold_build', 'Estático / Maestro', 'filas_minimas, id_unico, coordenadas_validas', 'silver:viajeros_enriquecidos', 'fact_viajeros, dashboard:demanda-ferroviaria', 7),
+      ('dim_fecha', 'Dimensión Fecha / Calendario', 'Gold', 6, 'Calendario y Tiempo', 'Calendario extendido que desglosa año, trimestre, mes, día, día de la semana, fines de semana y festivos laborales.', 'Un día del calendario', 'fecha', 'Parquet', 'gold_build', 'Estático / Anual', 'grano_unico, cobertura_fechas', 'silver:muestra_festivos', 'fact_viajeros, fact_puntualidad, fact_prediccion_demanda', 7),
+      ('dim_linea', 'Dimensión Línea Ferroviaria', 'Gold', 6, 'Infraestructura y Red', 'Catálogo de líneas ferroviarias de alta velocidad y convencional con cabeceras y kilometraje.', 'Una línea de la red', 'linea_id', 'Parquet', 'gold_build', 'Maestro', 'grano_unico', 'silver:crtm', 'fact_viajeros, fact_puntualidad', 5),
+      ('dim_operador', 'Dimensión Operador Ferroviario', 'Gold', 6, 'Mercado y Competencia', 'Maestro de empresas ferroviarias homologadas con licencia de tracción y viajeros en España.', 'Un operador ferroviario', 'operador_id', 'Parquet', 'gold_build', 'Maestro', 'grano_unico', 'silver:cnmc_trimestral', 'fact_mercado_trimestral, fact_viajeros, fact_puntualidad', 4),
+      ('fact_mercado_trimestral', 'Hecho de Mercado Trimestral', 'Gold', 6, 'Mercado y Competencia', 'Indicadores trimestrales agregados del mercado ferroviario de alta velocidad por corredor y operador. Incluye viajeros, plazas, trenes-km, ingresos y cuota de mercado.', 'Un trimestre, corredor y operador ferroviario', 'trimestre, corredor, operador_id', 'Parquet', 'gold_build', 'Trimestral', 'filas_minimas, grano_unico, no_nulos_claves, cuota_maxima', 'silver:cnmc_trimestral, gold:dim_operador', 'dataset:mercado_trimestral, dashboard:mercado-corredor', 8),
+      ('fact_precio_mensual', 'Hecho de Precios Medios Mensuales', 'Gold', 6, 'Mercado y Tarifas', 'Evolución mensual del precio medio pagado por trayecto y operador en las principales relaciones comerciales.', 'Un mes, trayecto y operador', 'mes, trayecto, operador_id', 'Parquet', 'gold_build', 'Mensual', 'filas_minimas, precio_positivo', 'silver:cnmc_precio_mensual, gold:dim_operador', 'dataset:precio_medio_mensual, dashboard:mercado-corredor', 4),
+      ('fact_precio_trimestral', 'Hecho de Precios Medios Trimestrales', 'Gold', 6, 'Mercado y Tarifas', 'Evolución trimestral del precio medio abonado por trayecto comercial.', 'Un trimestre, trayecto y operador', 'trimestre, trayecto, operador_id', 'Parquet', 'gold_build', 'Trimestral', 'filas_minimas, precio_positivo', 'silver:cnmc_precio_trimestral, gold:dim_operador', 'dataset:precio_medio_trimestral, dashboard:mercado-corredor', 4),
+      ('fact_prediccion_demanda', 'Hecho de Predicciones de Demanda LLM', 'Gold', 6, 'Predicción e IA', 'Predicciones diarias de demanda desagregada de viajeros generadas mediante modelo de lenguaje local (Ollama) con bandas de confianza y backtest.', 'Una fecha y corredor para una versión de modelo', 'fecha, corredor, version', 'Parquet', 'prediccion_demanda', 'Batch bajo demanda / Semanal', 'filas_minimas, balance_trimestre, cotas_validas', 'pred:prediccion_demanda, silver:cnmc_trimestral', 'dataset:prediccion_demanda, dashboard:prediccion-demanda', 7),
+      ('fact_puntualidad', 'Hecho de Puntualidad de Servicios', 'Gold', 6, 'Operaciones y Puntualidad', 'Registro individualizado de circulaciones con tiempos de retraso, cumplimiento horario y estado operativo del servicio.', 'Una circulación/servicio ferroviario en una fecha', 'fecha, servicio_id', 'Parquet', 'gold_build', 'Diario / Horario', 'filas_minimas, grano_unico, rango_retraso', 'silver:puntualidad_enriquecida, gold:dim_linea, gold:dim_operador', 'dataset:puntualidad_servicios, dashboard:puntualidad', 6),
+      ('fact_viajeros', 'Hecho de Viajeros Diarios', 'Gold', 6, 'Demanda y Tráfico', 'Registro de demanda de viajeros transportados por fecha, línea, operador y par origen-destino de estaciones.', 'Un día, línea, operador, estación de origen y estación de destino', 'fecha, linea_id, operador_id, estacion_origen_id, estacion_destino_id', 'Parquet', 'gold_build', 'Diario (Batch)', 'filas_minimas, no_nulos_claves, viajeros_positivos', 'silver:viajeros_enriquecidos, gold:dim_linea, gold:dim_estacion, gold:dim_operador', 'dataset:viajeros_diarios, dashboard:demanda-ferroviaria', 7),
+      ('calidad', 'Historial de Quality Gates', 'Metadatos', 9, 'Gobernanza y Auditoría', 'Registro de cada comprobación de control de calidad evaluada durante las cargas del lakehouse.', 'Una regla de calidad evaluada en una ejecución', 'run_id, tabla, gate', 'Parquet', 'raillytics.calidad / QualityGates.scala', 'Continuo por ejecución', 'audit_gate', 'todos_los_procesos', 'dashboard:trazabilidad-cargas, dashboard:lineage-cargas', 5),
+      ('cargas', 'Trazabilidad de Cargas', 'Metadatos', 9, 'Gobernanza y Auditoría', 'Registro de auditoría técnica persistente en _trazabilidad/cargas/ con una fila por ejecución y tabla procesada.', 'Una ejecución y tabla cargada', 'run_id, tabla', 'Parquet', 'raillytics.utils.cargas / Cargas.scala', 'Continuo por ejecución', 'best_effort_audit', 'todos_los_procesos', 'dashboard:trazabilidad-cargas, dashboard:lineage-cargas', 6)
+  )
+  SELECT * FROM catalog_tablas ORDER BY orden_capa, tabla
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 2815ea34-354c-587e-bc69-9c10c4e00cb6
+metrics:
+- metric_name: total_tablas
+  verbose_name: Total tablas
+  metric_type: null
+  expression: COUNT(*)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: tablas_gold
+  verbose_name: Tablas Gold
+  metric_type: null
+  expression: SUM(CASE WHEN capa = 'Gold' THEN 1 ELSE 0 END)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: tablas_silver
+  verbose_name: Tablas Silver
+  metric_type: null
+  expression: SUM(CASE WHEN capa = 'Silver' THEN 1 ELSE 0 END)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: tablas_bronze
+  verbose_name: Tablas Bronze
+  metric_type: null
+  expression: SUM(CASE WHEN capa LIKE 'Bronze%' THEN 1 ELSE 0 END)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+columns:
+- column_name: tabla
+  verbose_name: Tabla
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: nombre
+  verbose_name: Nombre
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: capa
+  verbose_name: Capa
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: orden_capa
+  verbose_name: Orden de la capa
+  is_dttm: false
+  is_active: true
+  type: INTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: dominio
+  verbose_name: Dominio
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: descripcion
+  verbose_name: Descripción
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: grano
+  verbose_name: Grano
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: claves
+  verbose_name: Claves primarias
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: formato
+  verbose_name: Formato
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: proceso
+  verbose_name: Proceso productor
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: frecuencia
+  verbose_name: Frecuencia
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: quality_gates
+  verbose_name: Quality Gates
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: upstream
+  verbose_name: Orígenes (Upstream)
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: downstream
+  verbose_name: Destinos (Downstream)
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: n_columnas
+  verbose_name: Columnas
+  is_dttm: false
+  is_active: true
+  type: BIGINT
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+version: 1.0.0
+database_uuid: c34b683c-9913-5c2c-b6a6-7d986acb824b

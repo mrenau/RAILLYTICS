@@ -1,0 +1,29 @@
+slice_name: Anomalías de volumen
+description: Cargas con volumen de filas significativamente divergente de la media histórica de la tabla.
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  adhoc_filters:
+  - clause: WHERE
+    comparator: No filter
+    expressionType: SIMPLE
+    operator: TEMPORAL_RANGE
+    subject: inicio
+  metric: n_anomalias_volumen
+  header_font_size: 0.4
+  subheader: ''
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  force_timestamp_formatting: false
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 4c2d8291-a1b2-5c3d-9e4f-718293a4b5c6
+version: 1.0.0
+dataset_uuid: c7f7da85-6e7e-5476-b9b0-d10421629fdf
+is_managed_externally: false
+external_url: null

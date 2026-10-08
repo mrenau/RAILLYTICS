@@ -1,0 +1,474 @@
+# Catálogo de Datos (Data Catalog) - Raillytics
+# Registro y diccionario técnico de datasets de todas las capas del Data Lakehouse.
+version: 1.0.0
+
+tablas:
+  # ==============================================================================================
+  # CAPA GOLD: Modelos dimensionales (Hechos y Dimensiones)
+  # ==============================================================================================
+  - tabla: fact_mercado_trimestral
+    nombre: Hecho de Mercado Trimestral
+    capa: Gold
+    orden_capa: 6
+    dominio: Mercado y Competencia
+    descripcion: Indicadores trimestrales agregados del mercado ferroviario de alta velocidad por corredor y operador. Incluye viajeros, plazas, trenes-km, ingresos y cuota de mercado.
+    grano: Un trimestre, corredor y operador ferroviario
+    claves: [trimestre, corredor, operador_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Trimestral
+    quality_gates: [filas_minimas, grano_unico, no_nulos_claves, cuota_maxima]
+    upstream: [silver:cnmc_trimestral, gold:dim_operador]
+    downstream: [dataset:mercado_trimestral, dashboard:mercado-corredor]
+    columnas:
+      - {nombre: trimestre, tipo: VARCHAR, descripcion: "Código de trimestre en formato AAAA-TX (ej. 2026-T2)", es_clave: true}
+      - {nombre: corredor, tipo: VARCHAR, descripcion: "Nombre normalizado del corredor ferroviario", es_clave: true}
+      - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador ferroviario", es_clave: true}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Total de viajeros transportados", es_clave: false}
+      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Total de plazas comerciales ofertadas", es_clave: false}
+      - {nombre: tren_km, tipo: DOUBLE, descripcion: "Kilómetros totales recorridos por las composiciones", es_clave: false}
+      - {nombre: ingresos_eur, tipo: DOUBLE, descripcion: "Ingresos comerciales brutos por venta de billetes", es_clave: false}
+      - {nombre: cuota_viajeros_pct, tipo: DOUBLE, descripcion: "Porcentaje de cuota de mercado en volumen de viajeros", es_clave: false}
+
+  - tabla: fact_viajeros
+    nombre: Hecho de Viajeros Diarios
+    capa: Gold
+    orden_capa: 6
+    dominio: Demanda y Tráfico
+    descripcion: Registro de demanda de viajeros transportados por fecha, línea, operador y par origen-destino de estaciones.
+    grano: Un día, línea, operador, estación de origen y estación de destino
+    claves: [fecha, linea_id, operador_id, estacion_origen_id, estacion_destino_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Diario (Batch)
+    quality_gates: [filas_minimas, no_nulos_claves, viajeros_positivos]
+    upstream: [silver:viajeros_enriquecidos, gold:dim_linea, gold:dim_estacion, gold:dim_operador]
+    downstream: [dataset:viajeros_diarios, dashboard:demanda-ferroviaria]
+    columnas:
+      - {nombre: fecha, tipo: DATE, descripcion: "Fecha del servicio de transporte", es_clave: true}
+      - {nombre: linea_id, tipo: VARCHAR, descripcion: "Identificador de la línea ferroviaria", es_clave: true}
+      - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador comercial", es_clave: true}
+      - {nombre: estacion_origen_id, tipo: VARCHAR, descripcion: "Identificador de la estación de salida", es_clave: true}
+      - {nombre: estacion_destino_id, tipo: VARCHAR, descripcion: "Identificador de la estación de llegada", es_clave: true}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Número de pasajeros transportados", es_clave: false}
+      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Capacidad de plazas comercializadas", es_clave: false}
+
+  - tabla: fact_puntualidad
+    nombre: Hecho de Puntualidad de Servicios
+    capa: Gold
+    orden_capa: 6
+    dominio: Operaciones y Puntualidad
+    descripcion: Registro individualizado de circulaciones con tiempos de retraso, cumplimiento horario y estado operativo del servicio.
+    grano: Una circulación/servicio ferroviario en una fecha
+    claves: [fecha, servicio_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Diario / Horario
+    quality_gates: [filas_minimas, grano_unico, rango_retraso]
+    upstream: [silver:puntualidad_enriquecida, gold:dim_linea, gold:dim_operador]
+    downstream: [dataset:puntualidad_servicios, dashboard:puntualidad]
+    columnas:
+      - {nombre: fecha, tipo: DATE, descripcion: "Fecha programada del servicio", es_clave: true}
+      - {nombre: servicio_id, tipo: VARCHAR, descripcion: "Código identificador único de la circulación", es_clave: true}
+      - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador ferroviario", es_clave: false}
+      - {nombre: linea_id, tipo: VARCHAR, descripcion: "Identificador de la línea recorrida", es_clave: false}
+      - {nombre: retraso_minutos, tipo: DOUBLE, descripcion: "Minutos de desviación respecto al horario oficial", es_clave: false}
+      - {nombre: estado_servicio, tipo: VARCHAR, descripcion: "Estado ('puntual', 'retrasado', 'cancelado')", es_clave: false}
+
+  - tabla: fact_precio_mensual
+    nombre: Hecho de Precios Medios Mensuales
+    capa: Gold
+    orden_capa: 6
+    dominio: Mercado y Tarifas
+    descripcion: Evolución mensual del precio medio pagado por trayecto y operador en las principales relaciones comerciales.
+    grano: Un mes, trayecto y operador
+    claves: [mes, trayecto, operador_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Mensual
+    quality_gates: [filas_minimas, precio_positivo]
+    upstream: [silver:cnmc_precio_mensual, gold:dim_operador]
+    downstream: [dataset:precio_medio_mensual, dashboard:mercado-corredor]
+    columnas:
+      - {nombre: mes, tipo: VARCHAR, descripcion: "Año y mes en formato AAAA-MM (ej. 2026-06)", es_clave: true}
+      - {nombre: trayecto, tipo: VARCHAR, descripcion: "Relación origen-destino analizada", es_clave: true}
+      - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador ferroviario", es_clave: true}
+      - {nombre: precio_medio_eur, tipo: DOUBLE, descripcion: "Precio medio ponderado del billete en euros", es_clave: false}
+
+  - tabla: fact_precio_trimestral
+    nombre: Hecho de Precios Medios Trimestrales
+    capa: Gold
+    orden_capa: 6
+    dominio: Mercado y Tarifas
+    descripcion: Evolución trimestral del precio medio abonado por trayecto comercial.
+    grano: Un trimestre, trayecto y operador
+    claves: [trimestre, trayecto, operador_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Trimestral
+    quality_gates: [filas_minimas, precio_positivo]
+    upstream: [silver:cnmc_precio_trimestral, gold:dim_operador]
+    downstream: [dataset:precio_medio_trimestral, dashboard:mercado-corredor]
+    columnas:
+      - {nombre: trimestre, tipo: VARCHAR, descripcion: "Trimestre en formato AAAA-TX", es_clave: true}
+      - {nombre: trayecto, tipo: VARCHAR, descripcion: "Trayecto comercial analizado", es_clave: true}
+      - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador", es_clave: true}
+      - {nombre: precio_medio_eur, tipo: DOUBLE, descripcion: "Precio medio del billete en euros", es_clave: false}
+
+  - tabla: fact_prediccion_demanda
+    nombre: Hecho de Predicciones de Demanda LLM
+    capa: Gold
+    orden_capa: 6
+    dominio: Predicción e IA
+    descripcion: Predicciones diarias de demanda desagregada de viajeros generadas mediante modelo de lenguaje local (Ollama) con bandas de confianza y backtest.
+    grano: Una fecha y corredor para una versión de modelo
+    claves: [fecha, corredor, version]
+    formato: Parquet
+    proceso: prediccion_demanda
+    frecuencia: Batch bajo demanda / Semanal
+    quality_gates: [filas_minimas, balance_trimestre, cotas_validas]
+    upstream: [pred:prediccion_demanda, silver:cnmc_trimestral]
+    downstream: [dataset:prediccion_demanda, dashboard:prediccion-demanda]
+    columnas:
+      - {nombre: fecha, tipo: DATE, descripcion: "Fecha de la predicción diaria", es_clave: true}
+      - {nombre: corredor, tipo: VARCHAR, descripcion: "Código de corredor (ej. AVE-MAD-BCN)", es_clave: true}
+      - {nombre: viajeros_previstos, tipo: BIGINT, descripcion: "Estimación central de viajeros previstos", es_clave: false}
+      - {nombre: cota_inferior, tipo: BIGINT, descripcion: "Banda de confianza inferior (p10)", es_clave: false}
+      - {nombre: cota_superior, tipo: BIGINT, descripcion: "Banda de confianza superior (p90)", es_clave: false}
+      - {nombre: modelo, tipo: VARCHAR, descripcion: "Identificador del modelo de inferencia", es_clave: false}
+      - {nombre: version, tipo: VARCHAR, descripcion: "Versión de prompt y parámetros", es_clave: true}
+
+  - tabla: dim_estacion
+    nombre: Dimensión Estación
+    capa: Gold
+    orden_capa: 6
+    dominio: Infraestructura y Red
+    descripcion: Maestro de estaciones ferroviarias con código Adif, ubicación geográfica, municipio y coordenadas lat/long.
+    grano: Una estación de la red ferroviaria
+    claves: [id_estacion]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Estático / Maestro
+    quality_gates: [filas_minimas, id_unico, coordenadas_validas]
+    upstream: [silver:viajeros_enriquecidos]
+    downstream: [fact_viajeros, dashboard:demanda-ferroviaria]
+    columnas:
+      - {nombre: id_estacion, tipo: VARCHAR, descripcion: "Identificador unívoco de la estación", es_clave: true}
+      - {nombre: nombre, tipo: VARCHAR, descripcion: "Nombre oficial de la estación", es_clave: false}
+      - {nombre: codigo_adif, tipo: VARCHAR, descripcion: "Código técnico de Adif", es_clave: false}
+      - {nombre: municipio, tipo: VARCHAR, descripcion: "Municipio de localización", es_clave: false}
+      - {nombre: provincia, tipo: VARCHAR, descripcion: "Provincia geográfica", es_clave: false}
+      - {nombre: latitud, tipo: DOUBLE, descripcion: "Coordenada latitud WGS84", es_clave: false}
+      - {nombre: longitud, tipo: DOUBLE, descripcion: "Coordenada longitud WGS84", es_clave: false}
+
+  - tabla: dim_fecha
+    nombre: Dimensión Fecha / Calendario
+    capa: Gold
+    orden_capa: 6
+    dominio: Calendario y Tiempo
+    descripcion: Calendario extendido que desglosa año, trimestre, mes, día, día de la semana, fines de semana y festivos laborales.
+    grano: Un día del calendario
+    claves: [fecha]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Estático / Anual
+    quality_gates: [grano_unico, cobertura_fechas]
+    upstream: [silver:muestra_festivos]
+    downstream: [fact_viajeros, fact_puntualidad, fact_prediccion_demanda]
+    columnas:
+      - {nombre: fecha, tipo: DATE, descripcion: "Fecha en formato ISO YYYY-MM-DD", es_clave: true}
+      - {nombre: anio, tipo: INTEGER, descripcion: "Año civil", es_clave: false}
+      - {nombre: mes, tipo: INTEGER, descripcion: "Mes numérico (1-12)", es_clave: false}
+      - {nombre: dia, tipo: INTEGER, descripcion: "Día del mes (1-31)", es_clave: false}
+      - {nombre: dia_semana, tipo: INTEGER, descripcion: "Día de la semana ISO (1=Lunes .. 7=Domingo)", es_clave: false}
+      - {nombre: es_fin_semana, tipo: BOOLEAN, descripcion: "Indica si es sábado o domingo", es_clave: false}
+      - {nombre: es_festivo, tipo: BOOLEAN, descripcion: "Indica si es festivo nacional o autonómico", es_clave: false}
+
+  - tabla: dim_operador
+    nombre: Dimensión Operador Ferroviario
+    capa: Gold
+    orden_capa: 6
+    dominio: Mercado y Competencia
+    descripcion: Maestro de empresas ferroviarias homologadas con licencia de tracción y viajeros en España.
+    grano: Un operador ferroviario
+    claves: [operador_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Maestro
+    quality_gates: [grano_unico]
+    upstream: [silver:cnmc_trimestral]
+    downstream: [fact_mercado_trimestral, fact_viajeros, fact_puntualidad]
+    columnas:
+      - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador (Renfe, Iryo, Ouigo)", es_clave: true}
+      - {nombre: nombre, tipo: VARCHAR, descripcion: "Razón social de la empresa ferroviaria", es_clave: false}
+      - {nombre: codigo_comercial, tipo: VARCHAR, descripcion: "Marca comercial bajo la que opera", es_clave: false}
+      - {nombre: pais, tipo: VARCHAR, descripcion: "País de origen de la matriz", es_clave: false}
+
+  - tabla: dim_linea
+    nombre: Dimensión Línea Ferroviaria
+    capa: Gold
+    orden_capa: 6
+    dominio: Infraestructura y Red
+    descripcion: Catálogo de líneas ferroviarias de alta velocidad y convencional con cabeceras y kilometraje.
+    grano: Una línea de la red
+    claves: [linea_id]
+    formato: Parquet
+    proceso: gold_build
+    frecuencia: Maestro
+    quality_gates: [grano_unico]
+    upstream: [silver:crtm]
+    downstream: [fact_viajeros, fact_puntualidad]
+    columnas:
+      - {nombre: linea_id, tipo: VARCHAR, descripcion: "Identificador unívoco de la línea", es_clave: true}
+      - {nombre: nombre, tipo: VARCHAR, descripcion: "Nombre oficial del trazado", es_clave: false}
+      - {nombre: origen, tipo: VARCHAR, descripcion: "Estación de cabecera inicial", es_clave: false}
+      - {nombre: destino, tipo: VARCHAR, descripcion: "Estación término final", es_clave: false}
+      - {nombre: longitud_km, tipo: DOUBLE, descripcion: "Longitud total del trazado en km", es_clave: false}
+
+  # ==============================================================================================
+  # CAPA SILVER: Tablas limpias, validadas y conformadas (Delta Lake / Spark)
+  # ==============================================================================================
+  - tabla: cnmc_trimestral
+    nombre: Silver CNMC Indicadores Trimestrales
+    capa: Silver
+    orden_capa: 4
+    dominio: Mercado y Competencia
+    descripcion: Datos depurados, deduplicados y tipados procedentes del informe trimestral oficial de la CNMC.
+    grano: Un trimestre, producto, corredor, empresa y tipo de servicio
+    claves: [trimestre, producto, corredor, empresa, servicio]
+    formato: Delta Lake
+    proceso: silver_builder
+    frecuencia: Trimestral
+    quality_gates: [filas_minimas, grano_unico, no_nulos_claves, serie_actualizada]
+    upstream: [l2:cnmc_indicadores]
+    downstream: [gold:fact_mercado_trimestral, gold:dim_operador]
+    columnas:
+      - {nombre: trimestre, tipo: VARCHAR, descripcion: "Trimestre en formato AAAA-TX", es_clave: true}
+      - {nombre: producto, tipo: VARCHAR, descripcion: "Tipo de producto ferroviario", es_clave: true}
+      - {nombre: corredor, tipo: VARCHAR, descripcion: "Nombre del corredor", es_clave: true}
+      - {nombre: empresa, tipo: VARCHAR, descripcion: "Empresa operadora", es_clave: true}
+      - {nombre: servicio, tipo: VARCHAR, descripcion: "Tipo de servicio prestado", es_clave: true}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Viajeros transportados", es_clave: false}
+      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Plazas comercializadas", es_clave: false}
+      - {nombre: ingresos_billetes_eur, tipo: DOUBLE, descripcion: "Ingresos por billetes en euros", es_clave: false}
+
+  - tabla: cnmc_precio_mensual
+    nombre: Silver CNMC Precios Mensuales
+    capa: Silver
+    orden_capa: 4
+    dominio: Mercado y Tarifas
+    descripcion: Registro de precios medios mensuales por trayecto y empresa normalizados a formato canónico.
+    grano: Un mes, empresa, servicio, producto y trayecto
+    claves: [anio_mes, empresa, servicio, producto, trayecto]
+    formato: Delta Lake
+    proceso: silver_builder
+    frecuencia: Mensual
+    quality_gates: [filas_minimas, no_nulos_claves, precios_positivos]
+    upstream: [l2:cnmc_precio_mensual]
+    downstream: [gold:fact_precio_mensual]
+    columnas:
+      - {nombre: anio_mes, tipo: VARCHAR, descripcion: "Periodo mensual AAAA-MM", es_clave: true}
+      - {nombre: trayecto, tipo: VARCHAR, descripcion: "Trayecto evaluado", es_clave: true}
+      - {nombre: empresa, tipo: VARCHAR, descripcion: "Empresa ferroviaria", es_clave: true}
+      - {nombre: precio_eur, tipo: DOUBLE, descripcion: "Precio medio del billete en euros", es_clave: false}
+
+  - tabla: cnmc_precio_trimestral
+    nombre: Silver CNMC Precios Trimestrales
+    capa: Silver
+    orden_capa: 4
+    dominio: Mercado y Tarifas
+    descripcion: Registro de precios medios trimestrales por trayecto comercial.
+    grano: Un trimestre, empresa, servicio, producto y trayecto
+    claves: [trimestre, empresa, servicio, producto, trayecto]
+    formato: Delta Lake
+    proceso: silver_builder
+    frecuencia: Trimestral
+    quality_gates: [filas_minimas, no_nulos_claves, precios_positivos]
+    upstream: [l2:cnmc_precio_trimestral]
+    downstream: [gold:fact_precio_trimestral]
+    columnas:
+      - {nombre: trimestre, tipo: VARCHAR, descripcion: "Trimestre AAAA-TX", es_clave: true}
+      - {nombre: trayecto, tipo: VARCHAR, descripcion: "Trayecto evaluado", es_clave: true}
+      - {nombre: empresa, tipo: VARCHAR, descripcion: "Empresa ferroviaria", es_clave: true}
+      - {nombre: precio_eur, tipo: DOUBLE, descripcion: "Precio medio del billete en euros", es_clave: false}
+
+  - tabla: cnmc_viajeros_corredor
+    nombre: Silver CNMC Viajeros por Corredor
+    capa: Silver
+    orden_capa: 4
+    dominio: Mercado y Competencia
+    descripcion: Serie histórica trimestral de alta velocidad desglosada por corredor y operador.
+    grano: Un trimestre, corredor y empresa
+    claves: [trimestre, corredor, empresa]
+    formato: Delta Lake
+    proceso: silver_builder
+    frecuencia: Trimestral
+    quality_gates: [filas_minimas, grano_unico]
+    upstream: [l2:cnmc_viajeros_corredor]
+    downstream: [gold:fact_mercado_trimestral]
+    columnas:
+      - {nombre: trimestre, tipo: VARCHAR, descripcion: "Trimestre AAAA-TX", es_clave: true}
+      - {nombre: corredor, tipo: VARCHAR, descripcion: "Corredor ferroviario", es_clave: true}
+      - {nombre: empresa, tipo: VARCHAR, descripcion: "Empresa operadora", es_clave: true}
+      - {nombre: viajeros_mill, tipo: DOUBLE, descripcion: "Millones de viajeros transportados", es_clave: false}
+
+  - tabla: cnmc_viajeros_producto
+    nombre: Silver CNMC Viajeros por Producto
+    capa: Silver
+    orden_capa: 4
+    dominio: Mercado y Competencia
+    descripcion: Serie histórica nacional de viajeros y plazas por segmento de producto (Cercanías, MD, LD).
+    grano: Un trimestre y tipo de producto
+    claves: [trimestre, producto]
+    formato: Delta Lake
+    proceso: silver_builder
+    frecuencia: Trimestral
+    quality_gates: [filas_minimas, grano_unico]
+    upstream: [l2:cnmc_viajeros_producto]
+    downstream: [dashboard:mercado-corredor]
+    columnas:
+      - {nombre: trimestre, tipo: VARCHAR, descripcion: "Trimestre AAAA-TX", es_clave: true}
+      - {nombre: producto, tipo: VARCHAR, descripcion: "Segmento de producto", es_clave: true}
+      - {nombre: viajeros_mill, tipo: DOUBLE, descripcion: "Millones de viajeros", es_clave: false}
+
+  - tabla: viajeros_enriquecidos
+    nombre: Silver Viajeros Enriquecidos
+    capa: Silver
+    orden_capa: 4
+    dominio: Demanda y Tráfico
+    descripcion: Datos de viajeros por servicio con normalización de estaciones e imputación de variables meteorológicas y de calendario.
+    grano: Un servicio ferroviario y fecha
+    claves: [servicio_id, fecha]
+    formato: Delta Lake
+    proceso: silver_sample / silver_builder
+    frecuencia: Streaming / Batch
+    quality_gates: [filas_minimas, claves_validas]
+    upstream: [l2:renfe_trip_updates, l2:crtm]
+    downstream: [gold:fact_viajeros, gold:dim_estacion]
+    columnas:
+      - {nombre: servicio_id, tipo: VARCHAR, descripcion: "Identificador del servicio", es_clave: true}
+      - {nombre: fecha, tipo: DATE, descripcion: "Fecha de operación", es_clave: true}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Pasajeros registrados", es_clave: false}
+
+  - tabla: puntualidad_enriquecida
+    nombre: Silver Puntualidad Enriquecida
+    capa: Silver
+    orden_capa: 4
+    dominio: Operaciones y Puntualidad
+    descripcion: Tiempos de paso por estaciones y retrasos computados cruzando eventos GTFS-RT con horarios teóricos.
+    grano: Un evento de parada de un servicio
+    claves: [servicio_id, fecha, estacion_id]
+    formato: Delta Lake
+    proceso: silver_sample / silver_builder
+    frecuencia: Streaming / Tiempo Real
+    quality_gates: [filas_minimas, retraso_valido]
+    upstream: [l2:renfe_trip_updates, l2:renfe_vehicle_positions]
+    downstream: [gold:fact_puntualidad]
+    columnas:
+      - {nombre: servicio_id, tipo: VARCHAR, descripcion: "Identificador del servicio", es_clave: true}
+      - {nombre: fecha, tipo: DATE, descripcion: "Fecha del servicio", es_clave: true}
+      - {nombre: retraso_minutos, tipo: DOUBLE, descripcion: "Retraso registrado en minutos", es_clave: false}
+
+  # ==============================================================================================
+  # CAPA BRONZE (L1 Raw / L2 Parquet)
+  # ==============================================================================================
+  - tabla: cnmc_indicadores
+    nombre: Bronze CNMC Indicadores Globales
+    capa: Bronze L2
+    orden_capa: 3
+    dominio: Ingesta y Fuentes Externas
+    descripcion: Fichero CSV de indicadores trimestrales de transporte ferroviario publicado por el portal de datos abiertos de la CNMC.
+    grano: Registro original del CSV fuente
+    claves: [Trimestre, Corredor, Empresa]
+    formato: Parquet (L2) / CSV (L1)
+    proceso: bronze_download -> raw_uploader -> parquet_converter
+    frecuencia: Trimestral
+    quality_gates: [formato_declarado, min_bytes, min_filas, columnas_obligatorias]
+    upstream: [fuente:cnmc_indicadores]
+    downstream: [silver:cnmc_trimestral]
+    columnas:
+      - {nombre: Trimestre, tipo: VARCHAR, descripcion: "Trimestre en texto original", es_clave: true}
+      - {nombre: Corredor, tipo: VARCHAR, descripcion: "Nombre de corredor", es_clave: true}
+      - {nombre: Empresa, tipo: VARCHAR, descripcion: "Operador", es_clave: true}
+
+  - tabla: crtm
+    nombre: Bronze CRTM Consorcio Madrid
+    capa: Bronze L2
+    orden_capa: 3
+    dominio: Ingesta y Fuentes Externas
+    descripcion: Archivo GTFS ZIP estático del Consorcio Regional de Transportes de Madrid con paradas, rutas y horarios.
+    grano: Múltiples ficheros desglosados (stops, routes, trips, stop_times)
+    claves: [stop_id, route_id, trip_id]
+    formato: Parquet (L2) / ZIP (L1)
+    proceso: bronze_download -> raw_uploader -> parquet_converter
+    frecuencia: Mensual / Bajo demanda
+    quality_gates: [formato_declarado, zip_valido]
+    upstream: [fuente:crtm]
+    downstream: [silver:viajeros_enriquecidos, gold:dim_linea]
+    columnas:
+      - {nombre: stop_id, tipo: VARCHAR, descripcion: "Identificador de parada", es_clave: true}
+      - {nombre: stop_name, tipo: VARCHAR, descripcion: "Nombre de parada", es_clave: false}
+
+  - tabla: renfe_trip_updates
+    nombre: Bronze Renfe GTFS-RT Trip Updates
+    capa: Bronze L2
+    orden_capa: 3
+    dominio: Ingesta y Fuentes Externas
+    descripcion: Feed continuo JSON GTFS-RT de Renfe Operadora con previsiones y actualizaciones de tiempo de paso en vivo.
+    grano: Una actualización de viaje y parada
+    claves: [trip_id, stop_sequence]
+    formato: Parquet (L2) / JSON (L1)
+    proceso: bronze_download -> raw_uploader -> parquet_converter
+    frecuencia: Continuo (Streaming)
+    quality_gates: [formato_declarado, json_valido]
+    upstream: [fuente:renfe_trip_updates]
+    downstream: [silver:puntualidad_enriquecida]
+    columnas:
+      - {nombre: trip_id, tipo: VARCHAR, descripcion: "Identificador del trayecto", es_clave: true}
+      - {nombre: delay, tipo: BIGINT, descripcion: "Demora en segundos", es_clave: false}
+
+  # ==============================================================================================
+  # GOBERNANZA, METADATOS Y AUDITORÍA
+  # ==============================================================================================
+  - tabla: cargas
+    nombre: Trazabilidad de Cargas
+    capa: Metadatos
+    orden_capa: 9
+    dominio: Gobernanza y Auditoría
+    descripcion: Registro de auditoría técnica persistente en _trazabilidad/cargas/ con una fila por ejecución y tabla procesada.
+    grano: Una ejecución y tabla cargada
+    claves: [run_id, tabla]
+    formato: Parquet
+    proceso: raillytics.utils.cargas / Cargas.scala
+    frecuencia: Continuo por ejecución
+    quality_gates: [best_effort_audit]
+    upstream: [todos_los_procesos]
+    downstream: [dashboard:trazabilidad-cargas, dashboard:lineage-cargas]
+    columnas:
+      - {nombre: run_id, tipo: VARCHAR, descripcion: "ID único de ejecución", es_clave: true}
+      - {nombre: proceso, tipo: VARCHAR, descripcion: "Nombre del componente técnico", es_clave: false}
+      - {nombre: tabla, tipo: VARCHAR, descripcion: "Tabla escrita", es_clave: true}
+      - {nombre: filas, tipo: BIGINT, descripcion: "Número de registros producidos", es_clave: false}
+      - {nombre: duracion_s, tipo: DOUBLE, descripcion: "Segundos empleados", es_clave: false}
+      - {nombre: estado, tipo: VARCHAR, descripcion: "'ok' o 'error'", es_clave: false}
+
+  - tabla: calidad
+    nombre: Historial de Quality Gates
+    capa: Metadatos
+    orden_capa: 9
+    dominio: Gobernanza y Auditoría
+    descripcion: Registro de cada comprobación de control de calidad evaluada durante las cargas del lakehouse.
+    grano: Una regla de calidad evaluada en una ejecución
+    claves: [run_id, tabla, gate]
+    formato: Parquet
+    proceso: raillytics.calidad / QualityGates.scala
+    frecuencia: Continuo por ejecución
+    quality_gates: [audit_gate]
+    upstream: [todos_los_procesos]
+    downstream: [dashboard:trazabilidad-cargas, dashboard:lineage-cargas]
+    columnas:
+      - {nombre: run_id, tipo: VARCHAR, descripcion: "ID único de ejecución", es_clave: true}
+      - {nombre: tabla, tipo: VARCHAR, descripcion: "Tabla evaluada", es_clave: true}
+      - {nombre: gate, tipo: VARCHAR, descripcion: "Nombre de la regla", es_clave: true}
+      - {nombre: resultado, tipo: VARCHAR, descripcion: "'ok' o 'fallo'", es_clave: false}
+      - {nombre: severidad, tipo: VARCHAR, descripcion: "'bloqueante' o 'aviso'", es_clave: false}

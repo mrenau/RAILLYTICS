@@ -15,19 +15,60 @@ position:
     id: GRID_ID
     children:
     - ROW-intro
+    - TABS-lineage
+    parents:
+    - ROOT_ID
+  TABS-lineage:
+    type: TABS
+    id: TABS-lineage
+    children:
+    - TAB-flujo
+    - TAB-nodos
+    - TAB-cargas
+    parents:
+    - ROOT_ID
+    - GRID_ID
+  TAB-flujo:
+    type: TAB
+    id: TAB-flujo
+    children:
     - ROW-kpis
     - ROW-sankey
     - ROW-grafo
+    meta:
+      text: Visión Global y Flujo
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-lineage
+  TAB-nodos:
+    type: TAB
+    id: TAB-nodos
+    children:
     - ROW-nodos
     - ROW-tabla_nodos
     - ROW-reglas
     - ROW-tabla_reglas
+    meta:
+      text: Nodos y Calidad
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-lineage
+  TAB-cargas:
+    type: TAB
+    id: TAB-cargas
+    children:
     - ROW-carga
     - ROW-grafo_carga
     - ROW-tabla_cargas
     - ROW-tabla_logs
+    meta:
+      text: Zoom por Ejecución
     parents:
     - ROOT_ID
+    - GRID_ID
+    - TABS-lineage
   HEADER_ID:
     id: HEADER_ID
     type: HEADER
@@ -46,7 +87,9 @@ position:
       height: 22
       code: '### Cómo leerlo
 
-        Cada **nodo** es una fuente, un fichero o tabla de una capa (staging, Bronze L1/L2, Silver, Gold), la predicción, un dataset o un dashboard. Cada **flecha** es una transformación (descarga HTTP, copia a MinIO, CSV→Parquet, SQL de Silver o Gold, dataset…) y su grosor crece con las filas de la última carga. El grafo sale del propio repositorio (`make lineage`) y se cruza con lo que de verdad se cargó (`_trazabilidad`): un nodo declarado que nunca se ha ejecutado figura como **sin ejecutar**. Más abajo: estado de cada nodo, reglas de calidad con su último resultado, las ejecuciones con su error y los enlaces a los logs de Airflow.'
+        Cada **nodo** es una fuente, un fichero o tabla de una capa (staging, Bronze L1/L2, Silver, Gold), la predicción, un dataset o un dashboard. Cada **flecha** es una transformación (descarga HTTP, copia a MinIO, CSV→Parquet, SQL de Silver o Gold, dataset…) y su grosor crece con las filas de la última carga. El grafo sale del propio repositorio (`make lineage`) y se cruza con lo que de verdad se cargó (`_trazabilidad`): un nodo declarado que nunca se ha ejecutado figura como **sin ejecutar**.
+
+        Navega por las pestañas: **Visión Global y Flujo** (Sankey y grafo interactivo), **Nodos y Calidad** (estado y reglas de cada nodo) y **Zoom por Ejecución** (recorrido y logs de Airflow por run_id). Consulta las especificaciones completas en el [Catálogo de Datos y Glosario](/superset/dashboard/catalogo-datos-glosario/).'
   ROW-intro:
     type: ROW
     id: ROW-intro
@@ -64,6 +107,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     - ROW-kpis
     meta:
       width: 3
@@ -78,6 +123,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     - ROW-kpis
     meta:
       width: 3
@@ -92,6 +139,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     - ROW-kpis
     meta:
       width: 3
@@ -106,6 +155,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     - ROW-kpis
     meta:
       width: 3
@@ -124,6 +175,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_sankey:
@@ -133,6 +186,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     - ROW-sankey
     meta:
       width: 12
@@ -148,6 +203,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_grafo:
@@ -157,6 +214,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     - ROW-grafo
     meta:
       width: 12
@@ -172,6 +231,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-flujo
     meta:
       background: BACKGROUND_TRANSPARENT
   MARKDOWN-nodos:
@@ -181,6 +242,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     - ROW-nodos
     meta:
       width: 12
@@ -194,6 +257,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_tabla_nodos:
@@ -203,6 +268,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     - ROW-tabla_nodos
     meta:
       width: 12
@@ -218,6 +285,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     meta:
       background: BACKGROUND_TRANSPARENT
   MARKDOWN-reglas:
@@ -227,6 +296,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     - ROW-reglas
     meta:
       width: 12
@@ -240,6 +311,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_tabla_reglas:
@@ -249,6 +322,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     - ROW-tabla_reglas
     meta:
       width: 12
@@ -264,6 +339,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-nodos
     meta:
       background: BACKGROUND_TRANSPARENT
   MARKDOWN-carga:
@@ -273,6 +350,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     - ROW-carga
     meta:
       width: 12
@@ -286,6 +365,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_grafo_carga:
@@ -295,6 +376,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     - ROW-grafo_carga
     meta:
       width: 12
@@ -310,6 +393,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_tabla_cargas:
@@ -319,6 +404,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     - ROW-tabla_cargas
     meta:
       width: 12
@@ -334,6 +421,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     meta:
       background: BACKGROUND_TRANSPARENT
   CHART-lineage_tabla_logs:
@@ -343,6 +432,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     - ROW-tabla_logs
     meta:
       width: 12
@@ -358,6 +449,8 @@ position:
     parents:
     - ROOT_ID
     - GRID_ID
+    - TABS-lineage
+    - TAB-cargas
     meta:
       background: BACKGROUND_TRANSPARENT
 metadata:

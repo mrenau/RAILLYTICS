@@ -1,0 +1,110 @@
+"""Carga y validación del Catálogo de Datos y Glosario de Términos."""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import yaml
+
+
+@dataclass(frozen=True)
+class ColumnaInfo:
+    nombre: str
+    tipo: str
+    descripcion: str = ""
+    es_clave: bool = False
+
+
+@dataclass(frozen=True)
+class TablaInfo:
+    tabla: str
+    nombre: str
+    capa: str
+    orden_capa: int
+    dominio: str
+    descripcion: str
+    grano: str
+    claves: list[str] = field(default_factory=list)
+    formato: str = "Parquet"
+    proceso: str = ""
+    frecuencia: str = ""
+    quality_gates: list[str] = field(default_factory=list)
+    upstream: list[str] = field(default_factory=list)
+    downstream: list[str] = field(default_factory=list)
+    columnas: list[ColumnaInfo] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class TerminoInfo:
+    termino: str
+    dominio: str
+    tipo: str
+    definicion: str
+    formula: str | None = None
+    sinonimos: str = ""
+    tablas_relacionadas: str = ""
+
+
+@dataclass
+class CatalogoGlosario:
+    tablas: list[TablaInfo] = field(default_factory=list)
+    terminos: list[TerminoInfo] = field(default_factory=list)
+
+
+def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
+    ruta_cat = raiz / "config" / "data_catalog.yml"
+    ruta_glo = raiz / "config" / "glosario.yml"
+
+    tablas: list[TablaInfo] = []
+    if ruta_cat.is_file():
+        datos_cat = yaml.safe_load(ruta_cat.read_text(encoding="utf-8")) or {}
+        for t in datos_cat.get("tablas", []):
+            cols = [
+                ColumnaInfo(
+                    nombre=c["nombre"],
+                    tipo=c.get("tipo", "VARCHAR"),
+                    descripcion=c.get("descripcion", ""),
+                    es_clave=c.get("es_clave", False),
+                )
+                for c in t.get("columnas", [])
+            ]
+            tablas.append(
+                TablaInfo(
+                    tabla=t["tabla"],
+                    nombre=t.get("nombre", t["tabla"]),
+                    capa=t.get("capa", "Gold"),
+                    orden_capa=int(t.get("orden_capa", 6)),
+                    dominio=t.get("dominio", "General"),
+                    descripcion=t.get("descripcion", ""),
+                    grano=t.get("grano", ""),
+                    claves=t.get("claves", []),
+                    formato=t.get("formato", "Parquet"),
+                    proceso=t.get("proceso", ""),
+                    frecuencia=t.get("frecuencia", ""),
+                    quality_gates=t.get("quality_gates", []),
+                    upstream=t.get("upstream", []),
+                    downstream=t.get("downstream", []),
+                    columnas=cols,
+                )
+            )
+
+    terminos: list[TerminoInfo] = []
+    if ruta_glo.is_file():
+        datos_glo = yaml.safe_load(ruta_glo.read_text(encoding="utf-8")) or {}
+        for item in datos_glo.get("terminos", []):
+            terminos.append(
+                TerminoInfo(
+                    termino=item["termino"],
+                    dominio=item.get("dominio", "General"),
+                    tipo=item.get("tipo", "Negocio"),
+                    definicion=item.get("definicion", ""),
+                    formula=item.get("formula"),
+                    sinonimos=item.get("sinonimos") or "",
+                    tablas_relacionadas=item.get("tablas_relacionadas") or "",
+                )
+            )
+
+    return CatalogoGlosario(
+        tablas=sorted(tablas, key=lambda x: (x.orden_capa, x.tabla)),
+        terminos=sorted(terminos, key=lambda x: (x.dominio, x.termino)),
+    )

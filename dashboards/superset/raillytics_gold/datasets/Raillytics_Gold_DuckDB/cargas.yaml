@@ -8,8 +8,36 @@ cache_timeout: null
 schema: null
 catalog: null
 sql: |-
-  -- Trazabilidad de cargas (raillytics.utils.cargas): una fila por ejecución y tabla.
+  -- Trazabilidad de cargas con detección de anomalías en volumen y duración.
   -- inicio y fin se guardan en UTC; aquí se muestran en hora de Madrid.
+  WITH base AS (
+      SELECT
+          run_id,
+          proceso,
+          capa,
+          tabla,
+          origen,
+          destino,
+          filas,
+          bytes,
+          timezone('Europe/Madrid', timezone('UTC', inicio)) AS inicio,
+          timezone('Europe/Madrid', timezone('UTC', fin))    AS fin,
+          duracion_s,
+          estado,
+          error,
+          parametros,
+          lanzado_por,
+          ejecutor,
+          usuario
+      FROM read_parquet('s3://raillytics-gold/_trazabilidad/cargas/*.parquet', union_by_name = true)
+  ),
+  con_stats AS (
+      SELECT
+          *,
+          round(avg(filas) OVER (PARTITION BY coalesce(tabla, proceso)), 0) AS media_filas,
+          round(avg(duracion_s) OVER (PARTITION BY coalesce(tabla, proceso)), 1) AS media_duracion
+      FROM base
+  )
   SELECT
       run_id,
       proceso,
@@ -19,16 +47,40 @@ sql: |-
       destino,
       filas,
       bytes,
-      timezone('Europe/Madrid', timezone('UTC', inicio)) AS inicio,
-      timezone('Europe/Madrid', timezone('UTC', fin))    AS fin,
+      inicio,
+      fin,
       duracion_s,
       estado,
       error,
       parametros,
       lanzado_por,
       ejecutor,
-      usuario
-  FROM read_parquet('s3://raillytics-gold/_trazabilidad/cargas/*.parquet', union_by_name = true)
+      usuario,
+      media_filas,
+      media_duracion,
+      CASE
+          WHEN media_filas > 0 AND filas IS NOT NULL
+          THEN round(((filas - media_filas) / media_filas) * 100.0, 1)
+          ELSE 0.0
+      END AS desviacion_filas_pct,
+      CASE
+          WHEN media_duracion > 0 AND duracion_s IS NOT NULL
+          THEN round(((duracion_s - media_duracion) / media_duracion) * 100.0, 1)
+          ELSE 0.0
+      END AS desviacion_duracion_pct,
+      CASE
+          WHEN filas IS NOT NULL AND media_filas >= 50
+               AND (filas < 0.4 * media_filas OR filas > 2.5 * media_filas)
+          THEN 'anómalo'
+          ELSE 'normal'
+      END AS anomalia_volumen,
+      CASE
+          WHEN duracion_s IS NOT NULL AND media_duracion >= 3.0
+               AND duracion_s > 3.0 * media_duracion
+          THEN 'lenta'
+          ELSE 'normal'
+      END AS anomalia_duracion
+  FROM con_stats
 params: null
 template_params: null
 filter_select_enabled: true
@@ -38,6 +90,22 @@ normalize_columns: false
 always_filter_main_dttm: false
 uuid: c7f7da85-6e7e-5476-b9b0-d10421629fdf
 metrics:
+- metric_name: n_anomalias_volumen
+  verbose_name: Anomalías de volumen
+  metric_type: null
+  expression: SUM(CASE WHEN anomalia_volumen = 'anómalo' THEN 1 ELSE 0 END)
+  description: Cargas con volumen de filas que se desvía fuertemente de la media
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: n_anomalias_duracion
+  verbose_name: Cargas anormalmente lentas
+  metric_type: null
+  expression: SUM(CASE WHEN anomalia_duracion = 'lenta' THEN 1 ELSE 0 END)
+  description: Cargas cuya duración supera por más de 3x la media histórica
+  d3format: ',d'
+  extra: null
+  warning_text: null
 - metric_name: n_ejecuciones
   verbose_name: Ejecuciones
   metric_type: null
@@ -289,6 +357,78 @@ columns:
   extra: null
 - column_name: usuario
   verbose_name: Usuario
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: media_filas
+  verbose_name: Media de filas (histórica)
+  is_dttm: false
+  is_active: true
+  type: DOUBLE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: media_duracion
+  verbose_name: Media de duración (s)
+  is_dttm: false
+  is_active: true
+  type: DOUBLE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: desviacion_filas_pct
+  verbose_name: Desviación de filas (%)
+  is_dttm: false
+  is_active: true
+  type: DOUBLE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: desviacion_duracion_pct
+  verbose_name: Desviación de duración (%)
+  is_dttm: false
+  is_active: true
+  type: DOUBLE
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: anomalia_volumen
+  verbose_name: Anomalía de volumen
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: anomalia_duracion
+  verbose_name: Anomalía de duración
   is_dttm: false
   is_active: true
   type: VARCHAR

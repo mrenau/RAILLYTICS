@@ -1,0 +1,63 @@
+slice_name: Inventario de datasets del Data Lakehouse
+description: Catálogo detallado de tablas con su dominio funcional, grano, claves primarias, formato, frecuencia y reglas de calidad.
+certified_by: null
+certification_details: null
+viz_type: table
+params:
+  viz_type: table
+  query_mode: raw
+  groupby: []
+  metrics: []
+  percent_metrics: []
+  row_limit: 1000
+  server_page_length: 10
+  include_search: true
+  show_totals: false
+  table_timestamp_format: '%Y-%m-%d %H:%M:%S'
+  show_cell_bars: false
+  color_pn: false
+  column_config: {}
+  temporal_columns_lookup: {}
+  time_grain_sqla: null
+  adhoc_filters: []
+  all_columns:
+  - capa
+  - tabla
+  - nombre
+  - dominio
+  - grano
+  - claves
+  - formato
+  - proceso
+  - frecuencia
+  - quality_gates
+  - upstream
+  - downstream
+  - n_columnas
+  - descripcion
+  order_by_cols:
+  - '["orden_capa", true]'
+  - '["tabla", true]'
+  allow_render_html: false
+  conditional_formatting:
+  - column: capa
+    operator: ==
+    targetValue: Gold
+    colorScheme: '#FDE380'
+  - column: capa
+    operator: ==
+    targetValue: Silver
+    colorScheme: '#ACE1C4'
+  - column: capa
+    operator: ==
+    targetValue: Bronze L2
+    colorScheme: '#F3B49F'
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 10000001-caca-5000-8000-000000000006
+version: 1.0.0
+dataset_uuid: 2815ea34-354c-587e-bc69-9c10c4e00cb6
+is_managed_externally: false
+external_url: null

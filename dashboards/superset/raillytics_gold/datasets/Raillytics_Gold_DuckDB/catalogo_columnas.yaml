@@ -1,0 +1,232 @@
+table_name: catalogo_columnas
+main_dttm_col: null
+description: Diccionario de columnas y esquemas técnicos de todas las tablas catalogadas en Raillytics.
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: null
+catalog: null
+sql: |-
+  -- Diccionario de Columnas de Raillytics: campos declarados en config/data_catalog.yml
+  -- Se genera con `make catalog` (raillytics.catalog): no lo edites a mano.
+  WITH catalog_columnas(tabla, capa, dominio, columna, tipo, es_clave, descripcion) AS (VALUES
+      ('cnmc_indicadores', 'Bronze L2', 'Ingesta y Fuentes Externas', 'Trimestre', 'VARCHAR', true, 'Trimestre en texto original'),
+      ('cnmc_indicadores', 'Bronze L2', 'Ingesta y Fuentes Externas', 'Corredor', 'VARCHAR', true, 'Nombre de corredor'),
+      ('cnmc_indicadores', 'Bronze L2', 'Ingesta y Fuentes Externas', 'Empresa', 'VARCHAR', true, 'Operador'),
+      ('crtm', 'Bronze L2', 'Ingesta y Fuentes Externas', 'stop_id', 'VARCHAR', true, 'Identificador de parada'),
+      ('crtm', 'Bronze L2', 'Ingesta y Fuentes Externas', 'stop_name', 'VARCHAR', false, 'Nombre de parada'),
+      ('renfe_trip_updates', 'Bronze L2', 'Ingesta y Fuentes Externas', 'trip_id', 'VARCHAR', true, 'Identificador del trayecto'),
+      ('renfe_trip_updates', 'Bronze L2', 'Ingesta y Fuentes Externas', 'delay', 'BIGINT', false, 'Demora en segundos'),
+      ('cnmc_precio_mensual', 'Silver', 'Mercado y Tarifas', 'anio_mes', 'VARCHAR', true, 'Periodo mensual AAAA-MM'),
+      ('cnmc_precio_mensual', 'Silver', 'Mercado y Tarifas', 'trayecto', 'VARCHAR', true, 'Trayecto evaluado'),
+      ('cnmc_precio_mensual', 'Silver', 'Mercado y Tarifas', 'empresa', 'VARCHAR', true, 'Empresa ferroviaria'),
+      ('cnmc_precio_mensual', 'Silver', 'Mercado y Tarifas', 'precio_eur', 'DOUBLE', false, 'Precio medio del billete en euros'),
+      ('cnmc_precio_trimestral', 'Silver', 'Mercado y Tarifas', 'trimestre', 'VARCHAR', true, 'Trimestre AAAA-TX'),
+      ('cnmc_precio_trimestral', 'Silver', 'Mercado y Tarifas', 'trayecto', 'VARCHAR', true, 'Trayecto evaluado'),
+      ('cnmc_precio_trimestral', 'Silver', 'Mercado y Tarifas', 'empresa', 'VARCHAR', true, 'Empresa ferroviaria'),
+      ('cnmc_precio_trimestral', 'Silver', 'Mercado y Tarifas', 'precio_eur', 'DOUBLE', false, 'Precio medio del billete en euros'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'trimestre', 'VARCHAR', true, 'Trimestre en formato AAAA-TX'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'producto', 'VARCHAR', true, 'Tipo de producto ferroviario'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'corredor', 'VARCHAR', true, 'Nombre del corredor'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'empresa', 'VARCHAR', true, 'Empresa operadora'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'servicio', 'VARCHAR', true, 'Tipo de servicio prestado'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'viajeros', 'BIGINT', false, 'Viajeros transportados'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'plazas_ofertadas', 'BIGINT', false, 'Plazas comercializadas'),
+      ('cnmc_trimestral', 'Silver', 'Mercado y Competencia', 'ingresos_billetes_eur', 'DOUBLE', false, 'Ingresos por billetes en euros'),
+      ('cnmc_viajeros_corredor', 'Silver', 'Mercado y Competencia', 'trimestre', 'VARCHAR', true, 'Trimestre AAAA-TX'),
+      ('cnmc_viajeros_corredor', 'Silver', 'Mercado y Competencia', 'corredor', 'VARCHAR', true, 'Corredor ferroviario'),
+      ('cnmc_viajeros_corredor', 'Silver', 'Mercado y Competencia', 'empresa', 'VARCHAR', true, 'Empresa operadora'),
+      ('cnmc_viajeros_corredor', 'Silver', 'Mercado y Competencia', 'viajeros_mill', 'DOUBLE', false, 'Millones de viajeros transportados'),
+      ('cnmc_viajeros_producto', 'Silver', 'Mercado y Competencia', 'trimestre', 'VARCHAR', true, 'Trimestre AAAA-TX'),
+      ('cnmc_viajeros_producto', 'Silver', 'Mercado y Competencia', 'producto', 'VARCHAR', true, 'Segmento de producto'),
+      ('cnmc_viajeros_producto', 'Silver', 'Mercado y Competencia', 'viajeros_mill', 'DOUBLE', false, 'Millones de viajeros'),
+      ('puntualidad_enriquecida', 'Silver', 'Operaciones y Puntualidad', 'servicio_id', 'VARCHAR', true, 'Identificador del servicio'),
+      ('puntualidad_enriquecida', 'Silver', 'Operaciones y Puntualidad', 'fecha', 'DATE', true, 'Fecha del servicio'),
+      ('puntualidad_enriquecida', 'Silver', 'Operaciones y Puntualidad', 'retraso_minutos', 'DOUBLE', false, 'Retraso registrado en minutos'),
+      ('viajeros_enriquecidos', 'Silver', 'Demanda y Tráfico', 'servicio_id', 'VARCHAR', true, 'Identificador del servicio'),
+      ('viajeros_enriquecidos', 'Silver', 'Demanda y Tráfico', 'fecha', 'DATE', true, 'Fecha de operación'),
+      ('viajeros_enriquecidos', 'Silver', 'Demanda y Tráfico', 'viajeros', 'BIGINT', false, 'Pasajeros registrados'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'id_estacion', 'VARCHAR', true, 'Identificador unívoco de la estación'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'nombre', 'VARCHAR', false, 'Nombre oficial de la estación'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'codigo_adif', 'VARCHAR', false, 'Código técnico de Adif'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'municipio', 'VARCHAR', false, 'Municipio de localización'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'provincia', 'VARCHAR', false, 'Provincia geográfica'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'latitud', 'DOUBLE', false, 'Coordenada latitud WGS84'),
+      ('dim_estacion', 'Gold', 'Infraestructura y Red', 'longitud', 'DOUBLE', false, 'Coordenada longitud WGS84'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'fecha', 'DATE', true, 'Fecha en formato ISO YYYY-MM-DD'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'anio', 'INTEGER', false, 'Año civil'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'mes', 'INTEGER', false, 'Mes numérico (1-12)'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'dia', 'INTEGER', false, 'Día del mes (1-31)'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'dia_semana', 'INTEGER', false, 'Día de la semana ISO (1=Lunes .. 7=Domingo)'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'es_fin_semana', 'BOOLEAN', false, 'Indica si es sábado o domingo'),
+      ('dim_fecha', 'Gold', 'Calendario y Tiempo', 'es_festivo', 'BOOLEAN', false, 'Indica si es festivo nacional o autonómico'),
+      ('dim_linea', 'Gold', 'Infraestructura y Red', 'linea_id', 'VARCHAR', true, 'Identificador unívoco de la línea'),
+      ('dim_linea', 'Gold', 'Infraestructura y Red', 'nombre', 'VARCHAR', false, 'Nombre oficial del trazado'),
+      ('dim_linea', 'Gold', 'Infraestructura y Red', 'origen', 'VARCHAR', false, 'Estación de cabecera inicial'),
+      ('dim_linea', 'Gold', 'Infraestructura y Red', 'destino', 'VARCHAR', false, 'Estación término final'),
+      ('dim_linea', 'Gold', 'Infraestructura y Red', 'longitud_km', 'DOUBLE', false, 'Longitud total del trazado en km'),
+      ('dim_operador', 'Gold', 'Mercado y Competencia', 'operador_id', 'VARCHAR', true, 'Identificador del operador (Renfe, Iryo, Ouigo)'),
+      ('dim_operador', 'Gold', 'Mercado y Competencia', 'nombre', 'VARCHAR', false, 'Razón social de la empresa ferroviaria'),
+      ('dim_operador', 'Gold', 'Mercado y Competencia', 'codigo_comercial', 'VARCHAR', false, 'Marca comercial bajo la que opera'),
+      ('dim_operador', 'Gold', 'Mercado y Competencia', 'pais', 'VARCHAR', false, 'País de origen de la matriz'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'trimestre', 'VARCHAR', true, 'Código de trimestre en formato AAAA-TX (ej. 2026-T2)'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'corredor', 'VARCHAR', true, 'Nombre normalizado del corredor ferroviario'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'operador_id', 'VARCHAR', true, 'Identificador del operador ferroviario'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'viajeros', 'BIGINT', false, 'Total de viajeros transportados'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'plazas_ofertadas', 'BIGINT', false, 'Total de plazas comerciales ofertadas'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'tren_km', 'DOUBLE', false, 'Kilómetros totales recorridos por las composiciones'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'ingresos_eur', 'DOUBLE', false, 'Ingresos comerciales brutos por venta de billetes'),
+      ('fact_mercado_trimestral', 'Gold', 'Mercado y Competencia', 'cuota_viajeros_pct', 'DOUBLE', false, 'Porcentaje de cuota de mercado en volumen de viajeros'),
+      ('fact_precio_mensual', 'Gold', 'Mercado y Tarifas', 'mes', 'VARCHAR', true, 'Año y mes en formato AAAA-MM (ej. 2026-06)'),
+      ('fact_precio_mensual', 'Gold', 'Mercado y Tarifas', 'trayecto', 'VARCHAR', true, 'Relación origen-destino analizada'),
+      ('fact_precio_mensual', 'Gold', 'Mercado y Tarifas', 'operador_id', 'VARCHAR', true, 'Identificador del operador ferroviario'),
+      ('fact_precio_mensual', 'Gold', 'Mercado y Tarifas', 'precio_medio_eur', 'DOUBLE', false, 'Precio medio ponderado del billete en euros'),
+      ('fact_precio_trimestral', 'Gold', 'Mercado y Tarifas', 'trimestre', 'VARCHAR', true, 'Trimestre en formato AAAA-TX'),
+      ('fact_precio_trimestral', 'Gold', 'Mercado y Tarifas', 'trayecto', 'VARCHAR', true, 'Trayecto comercial analizado'),
+      ('fact_precio_trimestral', 'Gold', 'Mercado y Tarifas', 'operador_id', 'VARCHAR', true, 'Identificador del operador'),
+      ('fact_precio_trimestral', 'Gold', 'Mercado y Tarifas', 'precio_medio_eur', 'DOUBLE', false, 'Precio medio del billete en euros'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'fecha', 'DATE', true, 'Fecha de la predicción diaria'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'corredor', 'VARCHAR', true, 'Código de corredor (ej. AVE-MAD-BCN)'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'viajeros_previstos', 'BIGINT', false, 'Estimación central de viajeros previstos'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'cota_inferior', 'BIGINT', false, 'Banda de confianza inferior (p10)'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'cota_superior', 'BIGINT', false, 'Banda de confianza superior (p90)'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'modelo', 'VARCHAR', false, 'Identificador del modelo de inferencia'),
+      ('fact_prediccion_demanda', 'Gold', 'Predicción e IA', 'version', 'VARCHAR', true, 'Versión de prompt y parámetros'),
+      ('fact_puntualidad', 'Gold', 'Operaciones y Puntualidad', 'fecha', 'DATE', true, 'Fecha programada del servicio'),
+      ('fact_puntualidad', 'Gold', 'Operaciones y Puntualidad', 'servicio_id', 'VARCHAR', true, 'Código identificador único de la circulación'),
+      ('fact_puntualidad', 'Gold', 'Operaciones y Puntualidad', 'operador_id', 'VARCHAR', false, 'Identificador del operador ferroviario'),
+      ('fact_puntualidad', 'Gold', 'Operaciones y Puntualidad', 'linea_id', 'VARCHAR', false, 'Identificador de la línea recorrida'),
+      ('fact_puntualidad', 'Gold', 'Operaciones y Puntualidad', 'retraso_minutos', 'DOUBLE', false, 'Minutos de desviación respecto al horario oficial'),
+      ('fact_puntualidad', 'Gold', 'Operaciones y Puntualidad', 'estado_servicio', 'VARCHAR', false, 'Estado (''puntual'', ''retrasado'', ''cancelado'')'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'fecha', 'DATE', true, 'Fecha del servicio de transporte'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'linea_id', 'VARCHAR', true, 'Identificador de la línea ferroviaria'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'operador_id', 'VARCHAR', true, 'Identificador del operador comercial'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'estacion_origen_id', 'VARCHAR', true, 'Identificador de la estación de salida'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'estacion_destino_id', 'VARCHAR', true, 'Identificador de la estación de llegada'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'viajeros', 'BIGINT', false, 'Número de pasajeros transportados'),
+      ('fact_viajeros', 'Gold', 'Demanda y Tráfico', 'plazas_ofertadas', 'BIGINT', false, 'Capacidad de plazas comercializadas'),
+      ('calidad', 'Metadatos', 'Gobernanza y Auditoría', 'run_id', 'VARCHAR', true, 'ID único de ejecución'),
+      ('calidad', 'Metadatos', 'Gobernanza y Auditoría', 'tabla', 'VARCHAR', true, 'Tabla evaluada'),
+      ('calidad', 'Metadatos', 'Gobernanza y Auditoría', 'gate', 'VARCHAR', true, 'Nombre de la regla'),
+      ('calidad', 'Metadatos', 'Gobernanza y Auditoría', 'resultado', 'VARCHAR', false, '''ok'' o ''fallo'''),
+      ('calidad', 'Metadatos', 'Gobernanza y Auditoría', 'severidad', 'VARCHAR', false, '''bloqueante'' o ''aviso'''),
+      ('cargas', 'Metadatos', 'Gobernanza y Auditoría', 'run_id', 'VARCHAR', true, 'ID único de ejecución'),
+      ('cargas', 'Metadatos', 'Gobernanza y Auditoría', 'proceso', 'VARCHAR', false, 'Nombre del componente técnico'),
+      ('cargas', 'Metadatos', 'Gobernanza y Auditoría', 'tabla', 'VARCHAR', true, 'Tabla escrita'),
+      ('cargas', 'Metadatos', 'Gobernanza y Auditoría', 'filas', 'BIGINT', false, 'Número de registros producidos'),
+      ('cargas', 'Metadatos', 'Gobernanza y Auditoría', 'duracion_s', 'DOUBLE', false, 'Segundos empleados'),
+      ('cargas', 'Metadatos', 'Gobernanza y Auditoría', 'estado', 'VARCHAR', false, '''ok'' o ''error''')
+  )
+  SELECT * FROM catalog_columnas ORDER BY tabla, columna
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: a8acbb1d-639c-5666-adfc-784481d0cae3
+metrics:
+- metric_name: total_columnas
+  verbose_name: Total columnas
+  metric_type: null
+  expression: COUNT(*)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: columnas_clave
+  verbose_name: Columnas clave
+  metric_type: null
+  expression: SUM(CASE WHEN es_clave THEN 1 ELSE 0 END)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+columns:
+- column_name: tabla
+  verbose_name: Tabla
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: capa
+  verbose_name: Capa
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: dominio
+  verbose_name: Dominio
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: columna
+  verbose_name: Columna
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: tipo
+  verbose_name: Tipo de dato
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: es_clave
+  verbose_name: Es clave
+  is_dttm: false
+  is_active: true
+  type: BOOLEAN
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: descripcion
+  verbose_name: Descripción
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+version: 1.0.0
+database_uuid: c34b683c-9913-5c2c-b6a6-7d986acb824b

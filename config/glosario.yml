@@ -1,0 +1,234 @@
+# Glosario de Términos de Negocio y Plataforma - Raillytics
+# Define el vocabulario oficial del proyecto, fórmulas de cálculo y contexto técnico.
+version: 1.0.0
+
+terminos:
+  # ==============================================================================================
+  # DOMINIO: Negocio Ferroviario y Mercado
+  # ==============================================================================================
+  - termino: Corredor Ferroviario
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Eje o infraestructura troncal que conecta grandes nodos urbanos o regiones geográficas (p. ej. Madrid–Barcelona, Madrid–Levante, Madrid–Andalucía). En Raillytics el análisis central se focaliza en el corredor de alta velocidad AVE-MAD-BCN."
+    formula: null
+    sinonimos: Corredor, Eje troncal
+    tablas_relacionadas: fact_mercado_trimestral, fact_viajeros, dim_linea
+
+  - termino: Viajeros (Pax)
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Número de pasajeros que utilizan un servicio de transporte ferroviario durante un trayecto o periodo temporal determinado."
+    formula: SUM(viajeros)
+    sinonimos: Pasajeros, Pax, Demanda
+    tablas_relacionadas: fact_viajeros, fact_mercado_trimestral, cnmc_viajeros_corredor
+
+  - termino: Viajeros·km
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Unidad compuesta de producción y demanda que representa el transporte de un viajero a lo largo de un kilómetro de distancia."
+    formula: SUM(viajeros * distancia_km)
+    sinonimos: Pasajeros-kilómetro, Tráfico de viajeros
+    tablas_relacionadas: cnmc_trimestral, fact_mercado_trimestral
+
+  - termino: Plazas Ofertadas
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Capacidad nominal máxima de asientos comercializados por los operadores ferroviarios en las circulaciones puestas a disposición del público."
+    formula: SUM(plazas_ofertadas)
+    sinonimos: Capacidad, Asientos disponibles
+    tablas_relacionadas: fact_viajeros, fact_mercado_trimestral, cnmc_viajeros_corredor
+
+  - termino: Plazas·km Ofertadas
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Medida de oferta total de capacidad obtenida multiplicando el número de plazas ofertadas de cada tren por los kilómetros de su recorrido."
+    formula: SUM(plazas_ofertadas * distancia_km)
+    sinonimos: Asientos-kilómetro ofertados (AKO)
+    tablas_relacionadas: cnmc_trimestral, fact_mercado_trimestral
+
+  - termino: Ocupación (Factor de Carga)
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Porcentaje de aprovechamiento de la capacidad disponible, calculado como el cociente entre viajeros·km y plazas·km ofertadas (o viajeros entre plazas ofertadas)."
+    formula: round(100.0 * viajeros_km / plazas_km_ofertadas, 2)
+    sinonimos: Load Factor, Factor de ocupación
+    tablas_relacionadas: fact_mercado_trimestral, cnmc_trimestral
+
+  - termino: Tren·km
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Distancia total en kilómetros recorrida por las composiciones de tren en servicio comercial, con independencia del número de viajeros o coches."
+    formula: SUM(tren_km)
+    sinonimos: Trenes-kilómetro
+    tablas_relacionadas: fact_mercado_trimestral, cnmc_indicadores
+
+  - termino: Cuota de Mercado (Market Share)
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Proporción de la demanda total de viajeros capturada por un operador específico en un corredor o periodo respecto al conjunto de operadores en competencia."
+    formula: round(100.0 * viajeros_operador / total_viajeros_corredor, 2)
+    sinonimos: Cuota, Participación de mercado
+    tablas_relacionadas: fact_mercado_trimestral, mercado_trimestral
+
+  - termino: Puntualidad Comercial
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Porcentaje de servicios ferroviarios que llegan a destino o estación intermedia dentro del margen de tolerancia de retraso establecido (en alta velocidad habitualmente < 5 minutos)."
+    formula: round(100.0 * COUNT(CASE WHEN retraso_minutos <= 5 THEN 1 END) / COUNT(*), 2)
+    sinonimos: On-Time Performance (OTP), Índice de puntualidad
+    tablas_relacionadas: fact_puntualidad, puntualidad_servicios
+
+  - termino: Retraso Medio
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Tiempo medio en minutos de demora acumulada por los trenes en circulación respecto al horario comercial teórico programado."
+    formula: AVG(retraso_minutos)
+    sinonimos: Demora media, Delay
+    tablas_relacionadas: fact_puntualidad, puntualidad_servicios
+
+  - termino: Tasa de Cancelación
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Porcentaje de circulaciones programadas que fueron suprimidas o canceladas sin prestar el servicio a los viajeros."
+    formula: round(100.0 * COUNT(CASE WHEN estado_servicio = 'cancelado' THEN 1 END) / COUNT(*), 2)
+    sinonimos: Servicios cancelados
+    tablas_relacionadas: fact_puntualidad, puntualidad_servicios
+
+  - termino: Obligación de Servicio Público (OSP)
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Servicios de transporte de viajeros garantizados por el Estado o administraciones autonómicas con compensaciones económicas públicas (p. ej. Cercanías, Media Distancia Convencional, Ancho Métrico)."
+    formula: null
+    sinonimos: OSP, Servicio público regulado
+    tablas_relacionadas: cnmc_indicadores, cnmc_viajeros_producto
+
+  - termino: Servicios Comerciales Liberalizados
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Servicios ferroviarios de Alta Velocidad y Larga Distancia explotados a riesgo y ventura de empresas ferroviarias autorizadas en régimen de competencia efectiva (Renfe Viajeros, ILSA / Iryo, Ouigo España)."
+    formula: null
+    sinonimos: Servicios liberalizados, Larga Distancia AV
+    tablas_relacionadas: fact_mercado_trimestral, dim_operador
+
+  - termino: Precio Medio por Trayecto
+    dominio: Negocio Ferroviario
+    tipo: Negocio
+    definicion: "Importe promedio del billete abonado por viajero para un par origen-destino determinado en el periodo de análisis."
+    formula: AVG(precio_eur)
+    sinonimos: Tarifa media, Average Fare
+    tablas_relacionadas: fact_precio_mensual, fact_precio_trimestral
+
+  # ==============================================================================================
+  # DOMINIO: Plataforma Data Lakehouse y Calidad
+  # ==============================================================================================
+  - termino: Arquitectura Medallion
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Patrón de diseño de ingeniería de datos que organiza el almacenamiento en tres capas progresivas de calidad y refinamiento: Bronze (bruto/ingesta), Silver (limpio/conforme) y Gold (agregado/dimensional)."
+    formula: null
+    sinonimos: Capas Bronze/Silver/Gold
+    tablas_relacionadas: _trazabilidad/cargas, lineage_nodos
+
+  - termino: Capa Bronze L1 (Raw)
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Almacenamiento inmutable en MinIO que preserva los ficheros tal como fueron descargados de las fuentes externas (CSV, JSON, ZIP), sirviendo como copia forense auditable."
+    formula: null
+    sinonimos: L1, Bronze Raw
+    tablas_relacionadas: _trazabilidad/cargas
+
+  - termino: Capa Bronze L2 (Parquet)
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Transformación técnica streaming/batch de L1 a formato Parquet columnar optimizado, descomprimiendo ZIPs (p. ej. GTFS) y preservando los esquemas fuente."
+    formula: null
+    sinonimos: L2, Bronze Parquet
+    tablas_relacionadas: _trazabilidad/cargas
+
+  - termino: Capa Silver
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Tablas limpias, tipadas, sin duplicados y enriquecidas gestionadas en Delta Lake mediante Spark Streaming o transformaciones SQL reproducibles."
+    formula: null
+    sinonimos: Silver, Curated Zone
+    tablas_relacionadas: silver_cnmc_trimestral, silver_viajeros_enriquecidos
+
+  - termino: Capa Gold
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Modelos dimensionales analíticos (esquema en estrella con tablas de hechos y dimensiones) almacenados en Parquet/MinIO, listos para consumo directo desde BI (DuckDB + Superset)."
+    formula: null
+    sinonimos: Gold, Data Marts
+    tablas_relacionadas: dim_fecha, dim_estacion, fact_viajeros, fact_mercado_trimestral
+
+  - termino: Quality Gate (Control de Calidad)
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Validación automatizada de reglas de integridad (filas mínimas, no nulos, unicidad de grano, rango de valores, coherencia relacional) aplicada a una tabla durante su procesamiento."
+    formula: null
+    sinonimos: Gate, Data Quality Check
+    tablas_relacionadas: config/quality_gates.yml, _trazabilidad/calidad
+
+  - termino: Quality Gate Bloqueante
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Regla de calidad crítica cuya no superación detiene inmediatamente la promoción de datos a la capa destino y envía los registros a cuarentena con estado 'error'."
+    formula: null
+    sinonimos: Gate crítico, Fail-closed
+    tablas_relacionadas: config/quality_gates.yml, _trazabilidad/calidad
+
+  - termino: Quality Gate Aviso
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Regla de calidad preventiva que registra una alerta en la trazabilidad ('aviso') sin abortar la ejecución ni bloquear la escritura de la tabla."
+    formula: null
+    sinonimos: Warning gate
+    tablas_relacionadas: config/quality_gates.yml, _trazabilidad/calidad
+
+  - termino: Trazabilidad de Cargas
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Registro histórico persistente en Parquet (_trazabilidad/cargas/) de cada ejecución del pipeline: run_id, proceso, capa, tabla, origen, destino, filas, bytes, duración, estado y ejecutor."
+    formula: null
+    sinonimos: Auditoría de cargas, Load Traceability
+    tablas_relacionadas: _trazabilidad/cargas, cargas
+
+  - termino: Lineage de Cargas (Linaje)
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Grafo de dependencias que conecta cada fuente de datos con sus tablas intermedias, modelos, datasets y dashboards, cruzado con el estado observado de las cargas."
+    formula: null
+    sinonimos: Data Lineage, Linaje de datos
+    tablas_relacionadas: lineage_nodos, lineage_aristas, lineage_cargas
+
+  - termino: Frescura de Datos (Freshness)
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Tiempo transcurrido desde la marca temporal de la última carga exitosa de una tabla hasta el instante presente, empleado para monitorizar retrasos de ingesta."
+    formula: "date_diff('hour', max(fin_carga), current_timestamp)"
+    sinonimos: Freshness, Latencia de datos
+    tablas_relacionadas: frescura_tablas, _trazabilidad/cargas
+
+  - termino: Run ID
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Identificador unívoco temporal de ejecución (formato: AAAAMMDDTHHMMSS-proceso-hex) que vincula todas las tablas, logs de Airflow y quality gates generados en una misma corrida."
+    formula: null
+    sinonimos: ID de ejecución, Execution Run
+    tablas_relacionadas: _trazabilidad/cargas, _trazabilidad/calidad
+
+  - termino: Grano de Datos (Granularidad)
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "El nivel exacto de detalle y significado individual que representa cada fila contenida en una tabla o dataset."
+    formula: null
+    sinonimos: Granularidad, Grain
+    tablas_relacionadas: data_catalog, config/data_catalog.yml
+
+  - termino: DuckDB
+    dominio: Plataforma Data Lakehouse
+    tipo: Técnico
+    definicion: "Motor SQL columnar OLAP embebido en Superset que permite consultar con alto rendimiento ficheros Parquet almacenados en MinIO/S3 sin necesidad de levantar un almacén de datos externo pesado."
+    formula: null
+    sinonimos: Motor SQL analítico
+    tablas_relacionadas: datasets/Raillytics_Gold_DuckDB

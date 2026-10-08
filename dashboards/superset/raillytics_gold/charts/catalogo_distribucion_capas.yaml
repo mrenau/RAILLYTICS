@@ -1,0 +1,54 @@
+slice_name: Distribución de tablas por capa
+description: Número de datasets y tablas en cada nivel de refinamiento de la arquitectura Medallion.
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  adhoc_filters: []
+  x_axis: capa
+  time_grain_sqla: null
+  x_axis_sort_asc: false
+  x_axis_sort_series: name
+  x_axis_sort_series_ascending: true
+  metrics:
+  - total_tablas
+  groupby: []
+  order_desc: true
+  row_limit: 20
+  truncate_metric: true
+  show_empty_columns: true
+  comparison_type: values
+  annotation_layers: []
+  forecastPeriods: 10
+  forecastInterval: 0.8
+  x_axis_title_margin: 15
+  y_axis_title_margin: 15
+  y_axis_title_position: Left
+  sort_series_type: sum
+  color_scheme: supersetColors
+  only_total: true
+  show_legend: false
+  legendType: scroll
+  legendOrientation: top
+  x_axis_time_format: smart_date
+  rich_tooltip: true
+  tooltipTimeFormat: smart_date
+  y_axis_format: ',d'
+  truncateXAxis: true
+  y_axis_bounds:
+  - null
+  - null
+  orientation: vertical
+  show_value: true
+  stack: null
+  x_axis_sort: total_tablas
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 10000001-caca-5000-8000-000000000005
+version: 1.0.0
+dataset_uuid: 2815ea34-354c-587e-bc69-9c10c4e00cb6
+is_managed_externally: false
+external_url: null

@@ -103,6 +103,7 @@ position:
     id: ROW-cargas-2
     children:
     - CHART-kpi_ultima_carga
+    - CHART-kpi_cargas_anomalias
     - CHART-cargas_por_dia
     parents:
     - ROOT_ID
@@ -123,6 +124,20 @@ position:
       chartId: 27
       uuid: 4c831303-c8bc-5c17-acac-82e146ca9b49
       sliceName: Última carga
+  CHART-kpi_cargas_anomalias:
+    type: CHART
+    id: CHART-kpi_cargas_anomalias
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-cargas-2
+    meta:
+      width: 3
+      height: 55
+      chartId: 37
+      uuid: 4c2d8291-a1b2-5c3d-9e4f-718293a4b5c6
+      sliceName: Anomalías de volumen
   CHART-cargas_por_dia:
     type: CHART
     id: CHART-cargas_por_dia
@@ -132,7 +147,7 @@ position:
     - GRID_ID
     - ROW-cargas-2
     meta:
-      width: 9
+      width: 6
       height: 55
       chartId: 28
       uuid: 746f2b4a-e825-5401-8fb0-8627967e100f

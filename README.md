@@ -129,7 +129,7 @@ RAILLYTICS/
 │   └── ingesta_data_sources.py # DAG Airflow: descarga por fuente (dynamic task mapping sobre el YAML)
 │
 ├── dashboards/
-│   └── superset/raillytics_gold/  # Dashboards de Superset como código (Demanda, Puntualidad, Trazabilidad de cargas, Lineage de cargas, Predicción de demanda); se importan al arrancar
+│   └── superset/raillytics_gold/  # Dashboards de Superset como código (Demanda, Puntualidad, Trazabilidad de cargas, Lineage de cargas, Catálogo de datos y Glosario, Predicción de demanda); se importan al arrancar
 │
 ├── data/                       # Data Lake local — NO se versiona en git
 │   ├── bronze/                 # Staging local por fuente — aquí escribe la descarga Python
@@ -515,23 +515,23 @@ Cargas.registrar("silver_viajeros", "silver", settings.cargasDir, Map("particion
 El registro se escribe al terminar, también si la carga falla (el error queda en la fila y la
 excepción se propaga); si el registro no se puede escribir, se avisa en el log pero la carga no
 falla por eso. `make cargas` lista las últimas ejecuciones desde la terminal, y el dashboard
-*Trazabilidad de cargas* de Superset muestra ejecuciones, errores, filas cargadas por día y
-tabla, duración por proceso, la última carga de cada tabla (en rojo si hace más de 24 h), los
-quality gates de cada carga y el historial completo. `TRAZABILIDAD_ROOT` cambia la ubicación
-del registro (por defecto, dentro del bucket Gold).
+*Trazabilidad de cargas* de Superset muestra ejecuciones, errores, anomalías de volumen detectadas
+(comparativa frente a la media histórica de la tabla), filas cargadas por día y tabla, duración por proceso,
+la última carga de cada tabla (en rojo si hace más de 24 h), los quality gates de cada carga y el historial completo.
+`TRAZABILIDAD_ROOT` cambia la ubicación del registro (por defecto, dentro del bucket Gold).
 
 Junto a `cargas/` vive `_trazabilidad/calidad/`, con una fila por quality gate evaluado y el
 **mismo `run_id`** que la carga a la que pertenece (ver [Quality Gates](#quality-gates)).
 
-### Lineage de cargas (dashboard en forma de grafo)
+### Lineage de cargas (dashboard organizado por pestañas)
 
 El dashboard *Lineage de cargas* (`/superset/dashboard/lineage-cargas/`) dibuja el recorrido de los datos **de la fuente al dashboard**:
-fuente → staging → Bronze L1 → L2 → Silver → Gold → dataset → dashboard, más los generadores sintéticos y la predicción con su LLM. Tiene un
-**Sankey** (flujo de izquierda a derecha, grosor según las filas de la última carga) y un **grafo** de fuerzas (un color por capa, nodos
-arrastrables, leyenda para ocultar capas); cada salto lleva su proceso y su transformación (`silver/<tabla>.sql`, `gold/<tabla>.sql`, la descarga
-del DAG, la copia a MinIO…). Debajo, el estado de cada nodo, las **reglas de calidad** con su último resultado y las **ejecuciones con su error y
-un enlace al log de la tarea de Airflow** (solo las descargas pasan por Airflow). El filtro *Ejecución* hace **zoom por carga**: un grafo con solo los
-saltos de los `run_id` elegidos.
+fuente → staging → Bronze L1 → L2 → Silver → Gold → dataset → dashboard, más los generadores sintéticos y la predicción con su LLM.
+La interfaz está organizada en **pestañas temáticas** para una navegación ágil sin scroll excesivo:
+
+- **Visión Global y Flujo**: **Sankey** (flujo de izquierda a derecha, grosor según las filas de la última carga) y **grafo** interactivo de fuerzas (un color por capa, nodos arrastrables, leyenda para ocultar capas); cada salto lleva su proceso y transformación (`silver/<tabla>.sql`, `gold/<tabla>.sql`, descarga del DAG, copia a MinIO…).
+- **Nodos y Calidad**: el estado de cada nodo (ok, aviso, error, sin ejecutar, no aplica) y las **reglas de calidad** con su último resultado evaluado (filtrable interactivamente por nodo).
+- **Zoom por Ejecución**: vista detallada por carga con el grafo del recorrido de los `run_id` seleccionados, las **ejecuciones con su error y los enlaces directos al log de la tarea de Airflow** (solo las descargas pasan por Airflow).
 
 Dos capas de información, que se cruzan en el SQL de los datasets:
 
@@ -553,6 +553,22 @@ make 06_superset-import      # y reimporta el dashboard
 Un test (`tests/lineage/test_sincronia.py`) falla si los YAML versionados no coinciden con lo que generaría `make lineage`. Los enlaces al log usan
 `http://localhost:8080` (la UI de Airflow del compose); `AIRFLOW_UI_URL` en el `.env` lo cambia. Para esos enlaces la descarga guarda su
 referencia de Airflow (`dag_id`, `run_id`, `task_id`, `map_index`) en `parametros.airflow` de su fila de trazabilidad.
+
+### Catálogo de Datos y Glosario de Términos
+
+El dashboard *Catálogo de datos y Glosario de términos* (`/superset/dashboard/catalogo-datos-glosario/`) actúa como centro de gobernanza y documentación viva de Raillytics:
+
+- **Catálogo de Datos**: inventario interactivo de todos los datasets de las capas Bronze (L1 y L2), Silver, Gold y Metadatos. Detalla para cada tabla su dominio funcional, granularidad/grano, claves primarias, formato (Delta Lake, Parquet, CSV, JSON), proceso productor, frecuencia de refresco, dependencias (upstream/downstream), quality gates asociados y diccionario de columnas con tipos de dato.
+- **Glosario de Términos**: diccionario formal con términos de negocio ferroviario (Corredor, Plazas Ofertadas, Plazas·km, Viajeros, Viajeros·km, Tren·km, Cuota de Mercado, Factor de Ocupación, Puntualidad Comercial, Retraso Medio, OSP, Servicios Liberalizados) y términos técnicos de plataforma (Arquitectura Medallion, Bronze L1/L2, Silver, Gold, Quality Gate Bloqueante/Aviso, Trazabilidad, Linaje, Frescura, Run ID), junto con sus fórmulas de cálculo y tablas relacionadas.
+
+La información se define en `config/data_catalog.yml` y `config/glosario.yml`, y se genera como datasets de DuckDB para Superset (`data_catalog`, `catalogo_columnas`, `glosario_terminos`):
+
+```bash
+make catalog                 # regenera los datasets del catálogo y glosario en dashboards/superset/
+make 06_superset-import      # y reimporta los dashboards en Superset
+```
+
+Un test (`tests/catalog/test_catalog.py`) comprueba la integridad de la configuración y asegura que los datasets versionados coinciden exactamente con lo declarado.
 
 ---
 

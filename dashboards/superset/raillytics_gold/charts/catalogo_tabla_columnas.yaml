@@ -1,0 +1,47 @@
+slice_name: Diccionario de columnas y esquemas
+description: Diccionario técnico de atributos y tipos de datos por tabla catalogada.
+certified_by: null
+certification_details: null
+viz_type: table
+params:
+  viz_type: table
+  query_mode: raw
+  groupby: []
+  metrics: []
+  percent_metrics: []
+  row_limit: 2000
+  server_page_length: 15
+  include_search: true
+  show_totals: false
+  table_timestamp_format: '%Y-%m-%d %H:%M:%S'
+  show_cell_bars: false
+  color_pn: false
+  column_config: {}
+  temporal_columns_lookup: {}
+  time_grain_sqla: null
+  adhoc_filters: []
+  all_columns:
+  - capa
+  - tabla
+  - columna
+  - tipo
+  - es_clave
+  - descripcion
+  order_by_cols:
+  - '["tabla", true]'
+  - '["columna", true]'
+  allow_render_html: false
+  conditional_formatting:
+  - column: es_clave
+    operator: ==
+    targetValue: 'true'
+    colorScheme: '#FDE380'
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 10000001-caca-5000-8000-000000000007
+version: 1.0.0
+dataset_uuid: a8acbb1d-639c-5666-adfc-784481d0cae3
+is_managed_externally: false
+external_url: null

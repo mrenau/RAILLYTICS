@@ -1,0 +1,474 @@
+dashboard_title: Catálogo de datos y Glosario de términos
+description: 'Inventario completo de datasets, modelos dimensionales, diccionario de columnas y glosario de términos de negocio y técnicos del Data Lakehouse Raillytics.'
+css: ''
+slug: catalogo-datos-glosario
+uuid: 10000000-caca-5000-8000-000000000000
+position:
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+    - GRID_ID
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children:
+    - ROW-intro
+    - TABS-catalogo_glosario
+    parents:
+    - ROOT_ID
+  HEADER_ID:
+    id: HEADER_ID
+    type: HEADER
+    meta:
+      text: Catálogo de datos y Glosario de términos
+  MARKDOWN-intro:
+    type: MARKDOWN
+    id: MARKDOWN-intro
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-intro
+    meta:
+      width: 12
+      height: 18
+      code: '### Catálogo de Datos y Glosario de Términos
+
+        Bienvenido al centro de gobernanza y metadatos de **Raillytics**. En la pestaña **Catálogo de Datos** puedes consultar todas las tablas de las capas Bronze, Silver y Gold, su nivel de grano, claves primarias, procesos productores, reglas de calidad y diccionario de columnas. En la pestaña **Glosario de Términos** encontrarás la definición formal y fórmulas de los conceptos clave del mercado ferroviario y de la plataforma. Para consultar el flujo y trazabilidad operativa de cargas, visita el [Lineage de cargas](/superset/dashboard/lineage-cargas/) y la [Trazabilidad de cargas](/superset/dashboard/trazabilidad-cargas/).'
+  ROW-intro:
+    type: ROW
+    id: ROW-intro
+    children:
+    - MARKDOWN-intro
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  TABS-catalogo_glosario:
+    type: TABS
+    id: TABS-catalogo_glosario
+    children:
+    - TAB-catalogo
+    - TAB-glosario
+    parents:
+    - ROOT_ID
+    - GRID_ID
+  TAB-catalogo:
+    type: TAB
+    id: TAB-catalogo
+    children:
+    - ROW-catalogo-kpis
+    - ROW-catalogo-dist
+    - ROW-catalogo-datasets
+    - ROW-catalogo-columnas
+    meta:
+      text: Catálogo de Datos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+  CHART-catalogo_kpi_tablas:
+    type: CHART
+    id: CHART-catalogo_kpi_tablas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 201
+      uuid: 10000001-caca-5000-8000-000000000001
+      sliceName: Tablas catalogadas
+  CHART-catalogo_kpi_columnas:
+    type: CHART
+    id: CHART-catalogo_kpi_columnas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 202
+      uuid: 10000001-caca-5000-8000-000000000002
+      sliceName: Columnas catalogadas
+  CHART-catalogo_kpi_gold:
+    type: CHART
+    id: CHART-catalogo_kpi_gold
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 203
+      uuid: 10000001-caca-5000-8000-000000000003
+      sliceName: Tablas Gold (Marts)
+  CHART-catalogo_kpi_silver:
+    type: CHART
+    id: CHART-catalogo_kpi_silver
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-kpis
+    meta:
+      width: 3
+      height: 50
+      chartId: 204
+      uuid: 10000001-caca-5000-8000-000000000004
+      sliceName: Tablas Silver (Curated)
+  ROW-catalogo-kpis:
+    type: ROW
+    id: ROW-catalogo-kpis
+    children:
+    - CHART-catalogo_kpi_tablas
+    - CHART-catalogo_kpi_columnas
+    - CHART-catalogo_kpi_gold
+    - CHART-catalogo_kpi_silver
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-catalogo_distribucion_capas:
+    type: CHART
+    id: CHART-catalogo_distribucion_capas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-dist
+    meta:
+      width: 12
+      height: 60
+      chartId: 205
+      uuid: 10000001-caca-5000-8000-000000000005
+      sliceName: Distribución de tablas por capa
+  ROW-catalogo-dist:
+    type: ROW
+    id: ROW-catalogo-dist
+    children:
+    - CHART-catalogo_distribucion_capas
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-catalogo_tabla_datasets:
+    type: CHART
+    id: CHART-catalogo_tabla_datasets
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-datasets
+    meta:
+      width: 12
+      height: 100
+      chartId: 206
+      uuid: 10000001-caca-5000-8000-000000000006
+      sliceName: Inventario de datasets del Data Lakehouse
+  ROW-catalogo-datasets:
+    type: ROW
+    id: ROW-catalogo-datasets
+    children:
+    - CHART-catalogo_tabla_datasets
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-catalogo_tabla_columnas:
+    type: CHART
+    id: CHART-catalogo_tabla_columnas
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    - ROW-catalogo-columnas
+    meta:
+      width: 12
+      height: 100
+      chartId: 207
+      uuid: 10000001-caca-5000-8000-000000000007
+      sliceName: Diccionario de columnas y esquemas
+  ROW-catalogo-columnas:
+    type: ROW
+    id: ROW-catalogo-columnas
+    children:
+    - CHART-catalogo_tabla_columnas
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-catalogo
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  TAB-glosario:
+    type: TAB
+    id: TAB-glosario
+    children:
+    - ROW-glosario-kpis
+    - ROW-glosario-terminos
+    meta:
+      text: Glosario de Términos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+  CHART-glosario_kpi_terminos:
+    type: CHART
+    id: CHART-glosario_kpi_terminos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-glosario
+    - ROW-glosario-kpis
+    meta:
+      width: 4
+      height: 50
+      chartId: 208
+      uuid: 10000001-caca-5000-8000-000000000008
+      sliceName: Términos en glosario
+  CHART-glosario_kpi_negocio:
+    type: CHART
+    id: CHART-glosario_kpi_negocio
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-glosario
+    - ROW-glosario-kpis
+    meta:
+      width: 4
+      height: 50
+      chartId: 209
+      uuid: 10000001-caca-5000-8000-000000000009
+      sliceName: Términos de negocio
+  CHART-glosario_kpi_tecnicos:
+    type: CHART
+    id: CHART-glosario_kpi_tecnicos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-glosario
+    - ROW-glosario-kpis
+    meta:
+      width: 4
+      height: 50
+      chartId: 210
+      uuid: 10000001-caca-5000-8000-000000000010
+      sliceName: Términos técnicos
+  ROW-glosario-kpis:
+    type: ROW
+    id: ROW-glosario-kpis
+    children:
+    - CHART-glosario_kpi_terminos
+    - CHART-glosario_kpi_negocio
+    - CHART-glosario_kpi_tecnicos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-glosario
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-glosario_tabla_terminos:
+    type: CHART
+    id: CHART-glosario_tabla_terminos
+    children: []
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-glosario
+    - ROW-glosario-terminos
+    meta:
+      width: 12
+      height: 110
+      chartId: 211
+      uuid: 10000001-caca-5000-8000-000000000011
+      sliceName: Glosario de términos y conceptos
+  ROW-glosario-terminos:
+    type: ROW
+    id: ROW-glosario-terminos
+    children:
+    - CHART-glosario_tabla_terminos
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - TABS-catalogo_glosario
+    - TAB-glosario
+    meta:
+      background: BACKGROUND_TRANSPARENT
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  timed_refresh_immune_slices: []
+  expanded_slices: {}
+  label_colors: {}
+  default_filters: '{}'
+  cross_filters_enabled: true
+  native_filter_configuration:
+  - id: NATIVE_FILTER-catalogo-capa
+    name: Capa
+    filterType: filter_select
+    targets:
+    - datasetUuid: 2815ea34-354c-587e-bc69-9c10c4e00cb6
+      column:
+        name: capa
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 202
+      - 207
+      - 208
+      - 209
+      - 210
+      - 211
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-catalogo-dominio
+    name: Dominio (Catálogo)
+    filterType: filter_select
+    targets:
+    - datasetUuid: 2815ea34-354c-587e-bc69-9c10c4e00cb6
+      column:
+        name: dominio
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 202
+      - 207
+      - 208
+      - 209
+      - 210
+      - 211
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-glosario-dominio
+    name: Dominio (Glosario)
+    filterType: filter_select
+    targets:
+    - datasetUuid: 57fdcb35-8bd9-55e7-be70-d82e930b3e1c
+      column:
+        name: dominio
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 201
+      - 202
+      - 203
+      - 204
+      - 205
+      - 206
+      - 207
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+  - id: NATIVE_FILTER-glosario-tipo
+    name: Tipo de término
+    filterType: filter_select
+    targets:
+    - datasetUuid: 57fdcb35-8bd9-55e7-be70-d82e930b3e1c
+      column:
+        name: tipo
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    cascadeParentIds: []
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded:
+      - 201
+      - 202
+      - 203
+      - 204
+      - 205
+      - 206
+      - 207
+    controlValues:
+      enableEmptyFilter: false
+      defaultToFirstItem: false
+      multiSelect: true
+      searchAllOptions: false
+      inverseSelection: false
+    type: NATIVE_FILTER
+    description: ''
+version: 1.0.0
+is_managed_externally: false
+external_url: null
+certified_by: null
+certification_details: null
+published: true

@@ -1,0 +1,24 @@
+slice_name: Columnas catalogadas
+description: Total de atributos y columnas documentadas en el diccionario de datos.
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  adhoc_filters: []
+  metric: total_columnas
+  header_font_size: 0.4
+  subheader: ''
+  subheader_font_size: 0.15
+  y_axis_format: SMART_NUMBER
+  time_format: smart_date
+  force_timestamp_formatting: false
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 10000001-caca-5000-8000-000000000002
+version: 1.0.0
+dataset_uuid: a8acbb1d-639c-5666-adfc-784481d0cae3
+is_managed_externally: false
+external_url: null

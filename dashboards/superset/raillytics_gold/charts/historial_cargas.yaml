@@ -20,6 +20,8 @@ params:
   - capa
   - tabla
   - filas
+  - desviacion_filas_pct
+  - anomalia_volumen
   - duracion_s
   - estado
   - lanzado_por
