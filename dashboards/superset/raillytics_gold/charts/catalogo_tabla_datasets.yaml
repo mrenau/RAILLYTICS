@@ -39,7 +39,8 @@ params:
   order_by_cols:
   - '["orden_capa", true]'
   - '["tabla", true]'
-  allow_render_html: false
+  allow_render_html: true
+  emit_filter: true
   conditional_formatting:
   - column: capa
     operator: ==

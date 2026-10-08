@@ -1,10 +1,10 @@
-"""Dashboard «Catálogo de datos y Glosario de términos»: inventario de datasets, diccionario y glosario."""
+"""Dashboard «Catálogo de datos y Glosario de términos»: inventario de datasets, diccionario, glosario y red de gobernanza."""
 import pytest
 
 from test_dashboards_corredor import DASHBOARDS, DATASETS, GRAFICOS, _graficos_de
 
 DASHBOARD = DASHBOARDS["catalogo_glosario"]
-CATALOG_DATASETS = ("data_catalog", "catalogo_columnas", "glosario_terminos")
+CATALOG_DATASETS = ("data_catalog", "catalogo_columnas", "glosario_terminos", "catalogo_relaciones")
 ESPERADOS = {
     "catalogo_kpi_tablas",
     "catalogo_kpi_columnas",
@@ -17,6 +17,7 @@ ESPERADOS = {
     "glosario_kpi_negocio",
     "glosario_kpi_tecnicos",
     "glosario_tabla_terminos",
+    "catalogo_grafo_gobernanza",
 }
 
 
@@ -25,10 +26,11 @@ def _columnas_usadas(grafico):
     columnas = set(p.get("all_columns") or []) | set(p.get("groupby") or [])
     if p.get("x_axis"):
         columnas.add(p["x_axis"])
+    columnas |= {p[k] for k in ("source", "target", "source_category", "target_category") if p.get(k)}
     return columnas
 
 
-def test_el_dashboard_tiene_sus_once_graficos_y_usan_datasets_de_catalogo():
+def test_el_dashboard_tiene_sus_doce_graficos_y_usan_datasets_de_catalogo():
     graficos = _graficos_de("catalogo_glosario")
 
     assert set(graficos) == ESPERADOS
@@ -50,7 +52,7 @@ def test_los_filtros_nativos_apuntan_a_columnas_reales():
     por_uuid = {d["uuid"]: d for d in DATASETS.values()}
     filtros = {f["name"]: f for f in DASHBOARD["metadata"]["native_filter_configuration"]}
 
-    assert set(filtros) == {"Capa", "Dominio (Catálogo)", "Dominio (Glosario)", "Tipo de término"}
+    assert set(filtros) == {"Capa", "Dominio (Catálogo)", "Dominio (Glosario)", "Tipo de término", "Tabla", "Término de glosario"}
     for nombre, filtro in filtros.items():
         destino = filtro["targets"][0]
         assert destino["column"]["name"] in {c["column_name"] for c in por_uuid[destino["datasetUuid"]]["columns"]}, nombre

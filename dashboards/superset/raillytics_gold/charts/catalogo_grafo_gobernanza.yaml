@@ -1,0 +1,40 @@
+slice_name: Red de gobernanza (conceptos, tablas, reglas y dashboards)
+description: 'Grafo interactivo de relaciones: mantén pulsado un nodo para inspeccionar sus conexiones. Pasa el ratón para ver la relación o pulsa en la leyenda para filtrar por categoría.'
+certified_by: null
+certification_details: null
+viz_type: graph_chart
+params:
+  viz_type: graph_chart
+  adhoc_filters: []
+  source: origen
+  target: destino
+  metric: peso_total
+  source_category: categoria_origen
+  target_category: categoria_destino
+  row_limit: 1000
+  layout: force
+  edgeSymbol: none,arrow
+  draggable: true
+  roam: true
+  selectedMode: single
+  showSymbolThreshold: 0
+  baseNodeSize: 12
+  baseEdgeWidth: 2
+  edgeLength: 110
+  gravity: 0.08
+  repulsion: 260
+  friction: 0.8
+  color_scheme: supersetColors
+  show_legend: true
+  legendType: scroll
+  legendOrientation: top
+  legendMargin: 5
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 10000001-caca-5000-8000-000000000012
+version: 1.0.0
+dataset_uuid: 6f239f5f-a26a-55ef-bbe6-9efffbebc428
+is_managed_externally: false
+external_url: null

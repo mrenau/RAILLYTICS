@@ -31,7 +31,7 @@ params:
   order_by_cols:
   - '["tabla", true]'
   - '["columna", true]'
-  allow_render_html: false
+  allow_render_html: true
   conditional_formatting:
   - column: es_clave
     operator: ==

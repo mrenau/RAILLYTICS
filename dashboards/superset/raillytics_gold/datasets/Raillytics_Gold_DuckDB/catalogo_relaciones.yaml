@@ -1,0 +1,457 @@
+table_name: catalogo_relaciones
+main_dttm_col: null
+description: 'Red relacional de gobernanza de datos: vincula conceptos del glosario, tablas del lakehouse, quality gates y dashboards.'
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: null
+catalog: null
+sql: |-
+  -- Grafo de Gobernanza de Raillytics: red de conceptos, datasets, gates y dashboards
+  -- Se genera con `make catalog` (raillytics.catalog): no lo edites a mano.
+  WITH relaciones(origen, destino, relacion, categoria_origen, categoria_destino, peso) AS (VALUES
+      ('Corredor Ferroviario', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Corredor Ferroviario', 'Dashboard: demanda-ferroviaria', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Corredor Ferroviario', 'Dashboard: prediccion-demanda', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Corredor Ferroviario', 'Gate: corredor_madrid_barcelona_presente', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Corredor Ferroviario', 'Gate: lineas_en_viajeros', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Corredor Ferroviario', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Corredor Ferroviario', 'Cuota de Mercado (Market Share)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Corredor Ferroviario', 'Servicios Comerciales Liberalizados', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Corredor Ferroviario', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Corredor Ferroviario', 'fact_viajeros', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Corredor Ferroviario', 'dim_linea', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Cuota de Mercado (Market Share)', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Cuota de Mercado (Market Share)', 'Gate: cuota_maxima', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Cuota de Mercado (Market Share)', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Cuota de Mercado (Market Share)', 'Gate: grano_unico', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Cuota de Mercado (Market Share)', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Cuota de Mercado (Market Share)', 'Corredor Ferroviario', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Cuota de Mercado (Market Share)', 'Servicios Comerciales Liberalizados', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Cuota de Mercado (Market Share)', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Cuota de Mercado (Market Share)', 'mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Obligación de Servicio Público (OSP)', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Obligación de Servicio Público (OSP)', 'Gate: empresas_conocidas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Obligación de Servicio Público (OSP)', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Obligación de Servicio Público (OSP)', 'Servicios Comerciales Liberalizados', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Obligación de Servicio Público (OSP)', 'cnmc_indicadores', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Obligación de Servicio Público (OSP)', 'cnmc_viajeros_producto', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Ocupación (Factor de Carga)', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Ocupación (Factor de Carga)', 'Gate: volumenes_no_negativos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Ocupación (Factor de Carga)', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Ocupación (Factor de Carga)', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Ocupación (Factor de Carga)', 'Plazas Ofertadas', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Ocupación (Factor de Carga)', 'Viajeros·km', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Ocupación (Factor de Carga)', 'Plazas·km Ofertadas', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Ocupación (Factor de Carga)', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Ocupación (Factor de Carga)', 'cnmc_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Plazas Ofertadas', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Plazas Ofertadas', 'Dashboard: demanda-ferroviaria', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Plazas Ofertadas', 'Gate: volumenes_no_negativos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Plazas Ofertadas', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Plazas Ofertadas', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Plazas Ofertadas', 'Plazas·km Ofertadas', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Plazas Ofertadas', 'Ocupación (Factor de Carga)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Plazas Ofertadas', 'fact_viajeros', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Plazas Ofertadas', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Plazas Ofertadas', 'cnmc_viajeros_corredor', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Plazas·km Ofertadas', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Plazas·km Ofertadas', 'Gate: volumenes_no_negativos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Plazas·km Ofertadas', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Plazas·km Ofertadas', 'Plazas Ofertadas', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Plazas·km Ofertadas', 'Viajeros·km', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Plazas·km Ofertadas', 'Ocupación (Factor de Carga)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Plazas·km Ofertadas', 'cnmc_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Plazas·km Ofertadas', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Precio Medio por Trayecto', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Precio Medio por Trayecto', 'Gate: precio_positivo', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Precio Medio por Trayecto', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Precio Medio por Trayecto', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Precio Medio por Trayecto', 'Cuota de Mercado (Market Share)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Precio Medio por Trayecto', 'fact_precio_mensual', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Precio Medio por Trayecto', 'fact_precio_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Puntualidad Comercial', 'Dashboard: puntualidad', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Puntualidad Comercial', 'Gate: retraso_no_negativo', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Puntualidad Comercial', 'Gate: realizado_con_retraso', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Puntualidad Comercial', 'Gate: cancelado_sin_retraso', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Puntualidad Comercial', 'Retraso Medio', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Puntualidad Comercial', 'Tasa de Cancelación', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Puntualidad Comercial', 'fact_puntualidad', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Puntualidad Comercial', 'puntualidad_servicios', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Retraso Medio', 'Dashboard: puntualidad', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Retraso Medio', 'Gate: retraso_no_negativo', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Retraso Medio', 'Gate: realizado_con_retraso', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Retraso Medio', 'Puntualidad Comercial', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Retraso Medio', 'Tasa de Cancelación', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Retraso Medio', 'fact_puntualidad', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Retraso Medio', 'puntualidad_servicios', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Servicios Comerciales Liberalizados', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Servicios Comerciales Liberalizados', 'Gate: corredor_madrid_barcelona_presente', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Servicios Comerciales Liberalizados', 'Gate: operadores_en_viajeros', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Servicios Comerciales Liberalizados', 'Obligación de Servicio Público (OSP)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Servicios Comerciales Liberalizados', 'Cuota de Mercado (Market Share)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Servicios Comerciales Liberalizados', 'Corredor Ferroviario', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Servicios Comerciales Liberalizados', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Servicios Comerciales Liberalizados', 'dim_operador', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Tasa de Cancelación', 'Dashboard: puntualidad', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Tasa de Cancelación', 'Gate: estado_valido', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Tasa de Cancelación', 'Gate: cancelado_sin_retraso', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Tasa de Cancelación', 'Puntualidad Comercial', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Tasa de Cancelación', 'Retraso Medio', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Tasa de Cancelación', 'fact_puntualidad', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Tasa de Cancelación', 'puntualidad_servicios', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Tren·km', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Tren·km', 'Gate: volumenes_no_negativos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Tren·km', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Tren·km', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Tren·km', 'Puntualidad Comercial', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Tren·km', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Tren·km', 'cnmc_indicadores', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Viajeros (Pax)', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Viajeros (Pax)', 'Dashboard: demanda-ferroviaria', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Viajeros (Pax)', 'Dashboard: prediccion-demanda', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Viajeros (Pax)', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Viajeros (Pax)', 'Gate: viajeros_no_negativos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Viajeros (Pax)', 'Gate: no_nulos_claves', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Viajeros (Pax)', 'Gate: viajeros_positivos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Viajeros (Pax)', 'Plazas Ofertadas', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros (Pax)', 'Ocupación (Factor de Carga)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros (Pax)', 'Viajeros·km', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros (Pax)', 'Cuota de Mercado (Market Share)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros (Pax)', 'fact_viajeros', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Viajeros (Pax)', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Viajeros (Pax)', 'cnmc_viajeros_corredor', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Viajeros·km', 'Dashboard: mercado-corredor', 'se explota en', 'Término Negocio', 'Dashboard', 2),
+      ('Viajeros·km', 'Gate: volumenes_no_negativos', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Viajeros·km', 'Gate: filas_minimas', 'regla asociada', 'Término Negocio', 'Quality Gate', 1),
+      ('Viajeros·km', 'Viajeros (Pax)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros·km', 'Plazas·km Ofertadas', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros·km', 'Ocupación (Factor de Carga)', 'relacionado con', 'Término Negocio', 'Término Negocio', 1),
+      ('Viajeros·km', 'cnmc_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Viajeros·km', 'fact_mercado_trimestral', 'almacenado en', 'Término Negocio', 'Dataset', 2),
+      ('Arquitectura Medallion', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Arquitectura Medallion', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Arquitectura Medallion', 'Gate: filas_minimas', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Arquitectura Medallion', 'Gate: grano_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Arquitectura Medallion', 'Capa Bronze L1 (Raw)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Arquitectura Medallion', 'Capa Bronze L2 (Parquet)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Arquitectura Medallion', 'Capa Silver', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Arquitectura Medallion', 'Capa Gold', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Arquitectura Medallion', '_trazabilidad/cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Arquitectura Medallion', 'lineage_nodos', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Bronze L1 (Raw)', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Bronze L1 (Raw)', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Bronze L1 (Raw)', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Bronze L1 (Raw)', 'Gate: carga_correcta', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Bronze L1 (Raw)', 'Arquitectura Medallion', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Bronze L1 (Raw)', 'Capa Bronze L2 (Parquet)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Bronze L1 (Raw)', 'Trazabilidad de Cargas', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Bronze L1 (Raw)', '_trazabilidad/cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Bronze L2 (Parquet)', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Bronze L2 (Parquet)', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Bronze L2 (Parquet)', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Bronze L2 (Parquet)', 'Gate: carga_correcta', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Bronze L2 (Parquet)', 'Arquitectura Medallion', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Bronze L2 (Parquet)', 'Capa Bronze L1 (Raw)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Bronze L2 (Parquet)', 'Capa Silver', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Bronze L2 (Parquet)', '_trazabilidad/cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Gold', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Gold', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Gold', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Gold', 'Gate: filas_minimas', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Gold', 'Gate: grano_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Gold', 'Gate: no_nulos_claves', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Gold', 'Arquitectura Medallion', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Gold', 'Capa Silver', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Gold', 'Grano de Datos (Granularidad)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Gold', 'DuckDB', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Gold', 'dim_fecha', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Gold', 'dim_estacion', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Gold', 'fact_viajeros', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Gold', 'fact_mercado_trimestral', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Silver', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Silver', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Silver', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Capa Silver', 'Gate: claves_sin_nulos', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Silver', 'Gate: grano_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Silver', 'Gate: filas_minimas', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Capa Silver', 'Arquitectura Medallion', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Silver', 'Capa Gold', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Silver', 'Quality Gate (Control de Calidad)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Capa Silver', 'silver_cnmc_trimestral', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Capa Silver', 'silver_viajeros_enriquecidos', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('DuckDB', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('DuckDB', 'Dashboard: mercado-corredor', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('DuckDB', 'Dashboard: demanda-ferroviaria', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('DuckDB', 'Dashboard: puntualidad', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('DuckDB', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('DuckDB', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('DuckDB', 'Capa Gold', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('DuckDB', 'Lineage de Cargas (Linaje)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('DuckDB', 'datasets/Raillytics_Gold_DuckDB', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Frescura de Datos (Freshness)', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Frescura de Datos (Freshness)', 'Gate: serie_actualizada', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Frescura de Datos (Freshness)', 'Gate: freshness_maxima', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Frescura de Datos (Freshness)', 'Trazabilidad de Cargas', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Frescura de Datos (Freshness)', 'Run ID', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Frescura de Datos (Freshness)', 'frescura_tablas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Frescura de Datos (Freshness)', '_trazabilidad/cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Grano de Datos (Granularidad)', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Grano de Datos (Granularidad)', 'Gate: grano_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Grano de Datos (Granularidad)', 'Capa Gold', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Grano de Datos (Granularidad)', 'Capa Silver', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Grano de Datos (Granularidad)', 'Quality Gate (Control de Calidad)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Grano de Datos (Granularidad)', 'data_catalog', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Grano de Datos (Granularidad)', 'config/data_catalog.yml', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Lineage de Cargas (Linaje)', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Lineage de Cargas (Linaje)', 'Gate: grafo_conectado', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Lineage de Cargas (Linaje)', 'Gate: aristas_validas', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Lineage de Cargas (Linaje)', 'Trazabilidad de Cargas', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Lineage de Cargas (Linaje)', 'Arquitectura Medallion', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Lineage de Cargas (Linaje)', 'Quality Gate (Control de Calidad)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Lineage de Cargas (Linaje)', 'lineage_nodos', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Lineage de Cargas (Linaje)', 'lineage_aristas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Lineage de Cargas (Linaje)', 'lineage_cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Quality Gate (Control de Calidad)', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate (Control de Calidad)', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate (Control de Calidad)', 'Dashboard: catalogo-datos-glosario', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate (Control de Calidad)', 'Gate: filas_minimas', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate (Control de Calidad)', 'Gate: claves_sin_nulos', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate (Control de Calidad)', 'Gate: grano_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate (Control de Calidad)', 'Quality Gate Bloqueante', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate (Control de Calidad)', 'Quality Gate Aviso', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate (Control de Calidad)', 'Capa Silver', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate (Control de Calidad)', 'Capa Gold', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate (Control de Calidad)', 'config/quality_gates.yml', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Quality Gate (Control de Calidad)', '_trazabilidad/calidad', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Quality Gate Aviso', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate Aviso', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate Aviso', 'Gate: atributos_estacion_sin_nulos', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate Aviso', 'Gate: atributos_linea_sin_nulos', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate Aviso', 'Gate: festivo_con_nombre', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate Aviso', 'Quality Gate (Control de Calidad)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate Aviso', 'Quality Gate Bloqueante', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate Aviso', 'config/quality_gates.yml', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Quality Gate Aviso', '_trazabilidad/calidad', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Quality Gate Bloqueante', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate Bloqueante', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Quality Gate Bloqueante', 'Gate: claves_sin_nulos', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate Bloqueante', 'Gate: grano_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate Bloqueante', 'Gate: viajeros_no_negativos', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Quality Gate Bloqueante', 'Quality Gate (Control de Calidad)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate Bloqueante', 'Quality Gate Aviso', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Quality Gate Bloqueante', 'config/quality_gates.yml', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Quality Gate Bloqueante', '_trazabilidad/calidad', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Run ID', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Run ID', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Run ID', 'Gate: run_id_unico', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Run ID', 'Trazabilidad de Cargas', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Run ID', 'Frescura de Datos (Freshness)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Run ID', '_trazabilidad/cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Run ID', '_trazabilidad/calidad', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Trazabilidad de Cargas', 'Dashboard: trazabilidad-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Trazabilidad de Cargas', 'Dashboard: lineage-cargas', 'se explota en', 'Término Técnico', 'Dashboard', 2),
+      ('Trazabilidad de Cargas', 'Gate: carga_registrada', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Trazabilidad de Cargas', 'Gate: anomalia_volumen', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Trazabilidad de Cargas', 'Gate: anomalia_duracion', 'regla asociada', 'Término Técnico', 'Quality Gate', 1),
+      ('Trazabilidad de Cargas', 'Run ID', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Trazabilidad de Cargas', 'Frescura de Datos (Freshness)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Trazabilidad de Cargas', 'Lineage de Cargas (Linaje)', 'relacionado con', 'Término Técnico', 'Término Negocio', 1),
+      ('Trazabilidad de Cargas', '_trazabilidad/cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('Trazabilidad de Cargas', 'cargas', 'almacenado en', 'Término Técnico', 'Dataset', 2),
+      ('cnmc_indicadores', 'Gate: formato_declarado', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('cnmc_indicadores', 'Gate: min_bytes', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('cnmc_indicadores', 'Gate: min_filas', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('cnmc_indicadores', 'Gate: columnas_obligatorias', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('crtm', 'Gate: formato_declarado', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('crtm', 'Gate: zip_valido', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('renfe_trip_updates', 'Gate: formato_declarado', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('renfe_trip_updates', 'Gate: json_valido', 'valida calidad', 'Capa Bronze L2', 'Quality Gate', 1),
+      ('cnmc_precio_mensual', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_precio_mensual', 'Gate: no_nulos_claves', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_precio_mensual', 'Gate: precios_positivos', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_precio_trimestral', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_precio_trimestral', 'Gate: no_nulos_claves', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_precio_trimestral', 'Gate: precios_positivos', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_trimestral', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_trimestral', 'Gate: grano_unico', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_trimestral', 'Gate: no_nulos_claves', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_trimestral', 'Gate: serie_actualizada', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_indicadores', 'cnmc_trimestral', 'transforma a', 'Capa Upstream', 'Capa Silver', 1),
+      ('cnmc_viajeros_corredor', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_viajeros_corredor', 'Gate: grano_unico', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_viajeros_producto', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_viajeros_producto', 'Gate: grano_unico', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('cnmc_viajeros_producto', 'Dashboard: mercado-corredor', 'alimenta', 'Capa Silver', 'Dashboard', 3),
+      ('puntualidad_enriquecida', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('puntualidad_enriquecida', 'Gate: retraso_valido', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('renfe_trip_updates', 'puntualidad_enriquecida', 'transforma a', 'Capa Upstream', 'Capa Silver', 1),
+      ('renfe_vehicle_positions', 'puntualidad_enriquecida', 'transforma a', 'Capa Upstream', 'Capa Silver', 1),
+      ('viajeros_enriquecidos', 'Gate: filas_minimas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('viajeros_enriquecidos', 'Gate: claves_validas', 'valida calidad', 'Capa Silver', 'Quality Gate', 1),
+      ('renfe_trip_updates', 'viajeros_enriquecidos', 'transforma a', 'Capa Upstream', 'Capa Silver', 1),
+      ('crtm', 'viajeros_enriquecidos', 'transforma a', 'Capa Upstream', 'Capa Silver', 1),
+      ('dim_estacion', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('dim_estacion', 'Gate: id_unico', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('dim_estacion', 'Gate: coordenadas_validas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('dim_estacion', 'Dashboard: demanda-ferroviaria', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('viajeros_enriquecidos', 'dim_estacion', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_fecha', 'Gate: grano_unico', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('dim_fecha', 'Gate: cobertura_fechas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('muestra_festivos', 'dim_fecha', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_linea', 'Gate: grano_unico', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('crtm', 'dim_linea', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_operador', 'Gate: grano_unico', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('cnmc_trimestral', 'dim_operador', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('fact_mercado_trimestral', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_mercado_trimestral', 'Gate: grano_unico', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_mercado_trimestral', 'Gate: no_nulos_claves', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_mercado_trimestral', 'Gate: cuota_maxima', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_mercado_trimestral', 'mercado_trimestral', 'publica en', 'Capa Gold', 'Dataset', 2),
+      ('fact_mercado_trimestral', 'Dashboard: mercado-corredor', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('cnmc_trimestral', 'fact_mercado_trimestral', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_operador', 'fact_mercado_trimestral', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('fact_precio_mensual', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_precio_mensual', 'Gate: precio_positivo', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_precio_mensual', 'precio_medio_mensual', 'publica en', 'Capa Gold', 'Dataset', 2),
+      ('fact_precio_mensual', 'Dashboard: mercado-corredor', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('cnmc_precio_mensual', 'fact_precio_mensual', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_operador', 'fact_precio_mensual', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('fact_precio_trimestral', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_precio_trimestral', 'Gate: precio_positivo', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_precio_trimestral', 'precio_medio_trimestral', 'publica en', 'Capa Gold', 'Dataset', 2),
+      ('fact_precio_trimestral', 'Dashboard: mercado-corredor', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('cnmc_precio_trimestral', 'fact_precio_trimestral', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_operador', 'fact_precio_trimestral', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('fact_prediccion_demanda', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_prediccion_demanda', 'Gate: balance_trimestre', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_prediccion_demanda', 'Gate: cotas_validas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_prediccion_demanda', 'prediccion_demanda', 'publica en', 'Capa Gold', 'Dataset', 2),
+      ('fact_prediccion_demanda', 'Dashboard: prediccion-demanda', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('prediccion_demanda', 'fact_prediccion_demanda', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('cnmc_trimestral', 'fact_prediccion_demanda', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('fact_puntualidad', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_puntualidad', 'Gate: grano_unico', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_puntualidad', 'Gate: rango_retraso', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_puntualidad', 'puntualidad_servicios', 'publica en', 'Capa Gold', 'Dataset', 2),
+      ('fact_puntualidad', 'Dashboard: puntualidad', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('puntualidad_enriquecida', 'fact_puntualidad', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_linea', 'fact_puntualidad', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_operador', 'fact_puntualidad', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('fact_viajeros', 'Gate: filas_minimas', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_viajeros', 'Gate: no_nulos_claves', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_viajeros', 'Gate: viajeros_positivos', 'valida calidad', 'Capa Gold', 'Quality Gate', 1),
+      ('fact_viajeros', 'viajeros_diarios', 'publica en', 'Capa Gold', 'Dataset', 2),
+      ('fact_viajeros', 'Dashboard: demanda-ferroviaria', 'alimenta', 'Capa Gold', 'Dashboard', 3),
+      ('viajeros_enriquecidos', 'fact_viajeros', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_linea', 'fact_viajeros', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_estacion', 'fact_viajeros', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('dim_operador', 'fact_viajeros', 'transforma a', 'Capa Upstream', 'Capa Gold', 1),
+      ('calidad', 'Gate: audit_gate', 'valida calidad', 'Capa Metadatos', 'Quality Gate', 1),
+      ('calidad', 'Dashboard: trazabilidad-cargas', 'alimenta', 'Capa Metadatos', 'Dashboard', 3),
+      ('calidad', 'Dashboard: lineage-cargas', 'alimenta', 'Capa Metadatos', 'Dashboard', 3),
+      ('cargas', 'Gate: best_effort_audit', 'valida calidad', 'Capa Metadatos', 'Quality Gate', 1),
+      ('cargas', 'Dashboard: trazabilidad-cargas', 'alimenta', 'Capa Metadatos', 'Dashboard', 3),
+      ('cargas', 'Dashboard: lineage-cargas', 'alimenta', 'Capa Metadatos', 'Dashboard', 3)
+  )
+  SELECT * FROM relaciones ORDER BY categoria_origen, origen
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 6f239f5f-a26a-55ef-bbe6-9efffbebc428
+metrics:
+- metric_name: total_relaciones
+  verbose_name: Total relaciones
+  metric_type: null
+  expression: COUNT(*)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+- metric_name: peso_total
+  verbose_name: Peso total
+  metric_type: null
+  expression: SUM(peso)
+  description: null
+  d3format: ',d'
+  extra: null
+  warning_text: null
+columns:
+- column_name: origen
+  verbose_name: Origen
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: destino
+  verbose_name: Destino
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: relacion
+  verbose_name: Relación
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: categoria_origen
+  verbose_name: Categoría origen
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: categoria_destino
+  verbose_name: Categoría destino
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+- column_name: peso
+  verbose_name: Peso
+  is_dttm: false
+  is_active: true
+  type: INTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
+version: 1.0.0
+database_uuid: c34b683c-9913-5c2c-b6a6-7d986acb824b
