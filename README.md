@@ -556,19 +556,23 @@ referencia de Airflow (`dag_id`, `run_id`, `task_id`, `map_index`) en `parametro
 
 ### Catálogo de Datos y Glosario de Términos
 
-El dashboard *Catálogo de datos y Glosario de términos* (`/superset/dashboard/catalogo-datos-glosario/`) actúa como centro de gobernanza y documentación viva de Raillytics:
+El dashboard *Catálogo de datos y Glosario de términos* (`/superset/dashboard/catalogo-datos-glosario/`) actúa como centro de gobernanza y documentación viva de Raillytics, conectando el modelo de datos con el negocio y la calidad:
 
-- **Catálogo de Datos**: inventario interactivo de todos los datasets de las capas Bronze (L1 y L2), Silver, Gold y Metadatos. Detalla para cada tabla su dominio funcional, granularidad/grano, claves primarias, formato (Delta Lake, Parquet, CSV, JSON), proceso productor, frecuencia de refresco, dependencias (upstream/downstream), quality gates asociados y diccionario de columnas con tipos de dato.
-- **Glosario de Términos**: diccionario formal con términos de negocio ferroviario (Corredor, Plazas Ofertadas, Plazas·km, Viajeros, Viajeros·km, Tren·km, Cuota de Mercado, Factor de Ocupación, Puntualidad Comercial, Retraso Medio, OSP, Servicios Liberalizados) y términos técnicos de plataforma (Arquitectura Medallion, Bronze L1/L2, Silver, Gold, Quality Gate Bloqueante/Aviso, Trazabilidad, Linaje, Frescura, Run ID), junto con sus fórmulas de cálculo y tablas relacionadas.
+- **Catálogo de Datos**: inventario interactivo de todos los datasets de las capas Bronze (L1 y L2), Silver, Gold y Metadatos. Detalla para cada tabla su dominio funcional, granularidad/grano, claves primarias, formato (Delta Lake, Parquet, CSV, JSON), proceso productor, frecuencia de refresco, dependencias (upstream/downstream), quality gates asociados, términos de glosario relacionados y diccionario de columnas tipadas con su mapeo al glosario.
+- **Glosario de Términos**: diccionario formal con términos de negocio ferroviario (Corredor, Plazas Ofertadas, Plazas·km, Viajeros, Viajeros·km, Tren·km, Cuota de Mercado, Factor de Ocupación, Puntualidad Comercial, Retraso Medio, OSP, Servicios Liberalizados) y términos técnicos de plataforma (Arquitectura Medallion, Bronze L1/L2, Silver, Gold, Quality Gate Bloqueante/Aviso, Trazabilidad, Linaje, Frescura, Run ID), junto con sus fórmulas de cálculo y:
+  - **Tablas y datos relacionados**: datasets donde se almacena o calcula cada concepto.
+  - **Dashboards relacionados**: tableros de Superset donde se explota visualmente (`mercado-corredor`, `demanda-ferroviaria`, `puntualidad`, `trazabilidad-cargas`, `lineage-cargas`, etc.).
+  - **Quality Gates asociados**: reglas de calidad (`quality_gates.yml`) que velan por la veracidad de la métrica.
+  - **Red de términos relacionados**: vínculos cruzados conceptuales y jerárquicos entre términos del glosario.
 
 La información se define en `config/data_catalog.yml` y `config/glosario.yml`, y se genera como datasets de DuckDB para Superset (`data_catalog`, `catalogo_columnas`, `glosario_terminos`):
 
 ```bash
-make catalog                 # regenera los datasets del catálogo y glosario en dashboards/superset/
+make metadata                # regenera tanto lineage como catálogo/glosario (o individualmente: make catalog / make lineage)
 make 06_superset-import      # y reimporta los dashboards en Superset
 ```
 
-Un test (`tests/catalog/test_catalog.py`) comprueba la integridad de la configuración y asegura que los datasets versionados coinciden exactamente con lo declarado.
+Los tests unitarios (`tests/catalog/test_catalog.py`) comprueban la integridad referencial completa (que ningún término, regla o dashboard apunte a identificadores inexistentes) y aseguran que los datasets versionados coinciden exactamente con lo declarado.
 
 ---
 

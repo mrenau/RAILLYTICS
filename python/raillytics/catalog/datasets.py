@@ -98,13 +98,14 @@ def sql_data_catalog(cat: CatalogoGlosario) -> str:
             ", ".join(t.quality_gates) if t.quality_gates else "-",
             ", ".join(t.upstream) if t.upstream else "-",
             ", ".join(t.downstream) if t.downstream else "-",
+            ", ".join(t.terminos_glosario) if t.terminos_glosario else "-",
             len(t.columnas),
         )
         for t in cat.tablas
     ]
     return f"""-- Catálogo de Datos de Raillytics: datasets declarados en config/data_catalog.yml
 -- Se genera con `make catalog` (raillytics.catalog): no lo edites a mano.
-WITH catalog_tablas(tabla, nombre, capa, orden_capa, dominio, descripcion, grano, claves, formato, proceso, frecuencia, quality_gates, upstream, downstream, n_columnas) AS (VALUES
+WITH catalog_tablas(tabla, nombre, capa, orden_capa, dominio, descripcion, grano, claves, formato, proceso, frecuencia, quality_gates, upstream, downstream, terminos_glosario, n_columnas) AS (VALUES
     {_values(filas)}
 )
 SELECT * FROM catalog_tablas ORDER BY orden_capa, tabla"""
@@ -119,6 +120,7 @@ def sql_catalogo_columnas(cat: CatalogoGlosario) -> str:
             c.nombre,
             c.tipo,
             c.es_clave,
+            c.termino_glosario or "-",
             c.descripcion or "-",
         )
         for t in cat.tablas
@@ -126,7 +128,7 @@ def sql_catalogo_columnas(cat: CatalogoGlosario) -> str:
     ]
     return f"""-- Diccionario de Columnas de Raillytics: campos declarados en config/data_catalog.yml
 -- Se genera con `make catalog` (raillytics.catalog): no lo edites a mano.
-WITH catalog_columnas(tabla, capa, dominio, columna, tipo, es_clave, descripcion) AS (VALUES
+WITH catalog_columnas(tabla, capa, dominio, columna, tipo, es_clave, termino_glosario, descripcion) AS (VALUES
     {_values(filas)}
 )
 SELECT * FROM catalog_columnas ORDER BY tabla, columna"""
@@ -142,12 +144,15 @@ def sql_glosario_terminos(cat: CatalogoGlosario) -> str:
             t.formula or "-",
             t.sinonimos or "-",
             t.tablas_relacionadas or "-",
+            ", ".join(t.dashboards_relacionados) if t.dashboards_relacionados else "-",
+            ", ".join(t.quality_gates) if t.quality_gates else "-",
+            ", ".join(t.terminos_relacionados) if t.terminos_relacionados else "-",
         )
         for t in cat.terminos
     ]
     return f"""-- Glosario de Términos de Raillytics: conceptos oficiales declarados en config/glosario.yml
 -- Se genera con `make catalog` (raillytics.catalog): no lo edites a mano.
-WITH glosario(termino, dominio, tipo, definicion, formula, sinonimos, tablas_relacionadas) AS (VALUES
+WITH glosario(termino, dominio, tipo, definicion, formula, sinonimos, tablas_relacionadas, dashboards_relacionados, quality_gates, terminos_relacionados) AS (VALUES
     {_values(filas)}
 )
 SELECT * FROM glosario ORDER BY dominio, termino"""
@@ -169,6 +174,7 @@ def construir_datasets_catalogo(cat: CatalogoGlosario) -> dict[str, dict]:
         _col("quality_gates", "Quality Gates"),
         _col("upstream", "Orígenes (Upstream)"),
         _col("downstream", "Destinos (Downstream)"),
+        _col("terminos_glosario", "Términos del glosario"),
         _col("n_columnas", "Columnas", "BIGINT"),
     ]
     cols_columnas = [
@@ -178,6 +184,7 @@ def construir_datasets_catalogo(cat: CatalogoGlosario) -> dict[str, dict]:
         _col("columna", "Columna"),
         _col("tipo", "Tipo de dato"),
         _col("es_clave", "Es clave", "BOOLEAN"),
+        _col("termino_glosario", "Término del glosario"),
         _col("descripcion", "Descripción"),
     ]
     cols_glosario = [
@@ -188,6 +195,9 @@ def construir_datasets_catalogo(cat: CatalogoGlosario) -> dict[str, dict]:
         _col("formula", "Fórmula"),
         _col("sinonimos", "Sinónimos"),
         _col("tablas_relacionadas", "Tablas relacionadas"),
+        _col("dashboards_relacionados", "Dashboards relacionados"),
+        _col("quality_gates", "Quality Gates asociados"),
+        _col("terminos_relacionados", "Términos relacionados"),
     ]
 
     return {

@@ -1,6 +1,6 @@
 # Glosario de Términos de Negocio y Plataforma - Raillytics
-# Define el vocabulario oficial del proyecto, fórmulas de cálculo y contexto técnico.
-version: 1.0.0
+# Define el vocabulario oficial del proyecto, fórmulas de cálculo, contexto técnico y relaciones con datos, calidad y dashboards.
+version: 1.1.0
 
 terminos:
   # ==============================================================================================
@@ -13,6 +13,9 @@ terminos:
     formula: null
     sinonimos: Corredor, Eje troncal
     tablas_relacionadas: fact_mercado_trimestral, fact_viajeros, dim_linea
+    dashboards_relacionados: [mercado-corredor, demanda-ferroviaria, prediccion-demanda]
+    quality_gates: [corredor_madrid_barcelona_presente, lineas_en_viajeros]
+    terminos_relacionados: [Viajeros (Pax), Cuota de Mercado (Market Share), Servicios Comerciales Liberalizados]
 
   - termino: Viajeros (Pax)
     dominio: Negocio Ferroviario
@@ -21,6 +24,9 @@ terminos:
     formula: SUM(viajeros)
     sinonimos: Pasajeros, Pax, Demanda
     tablas_relacionadas: fact_viajeros, fact_mercado_trimestral, cnmc_viajeros_corredor
+    dashboards_relacionados: [mercado-corredor, demanda-ferroviaria, prediccion-demanda]
+    quality_gates: [filas_minimas, viajeros_no_negativos, no_nulos_claves, viajeros_positivos]
+    terminos_relacionados: [Plazas Ofertadas, Ocupación (Factor de Carga), Viajeros·km, Cuota de Mercado (Market Share)]
 
   - termino: Viajeros·km
     dominio: Negocio Ferroviario
@@ -29,6 +35,9 @@ terminos:
     formula: SUM(viajeros * distancia_km)
     sinonimos: Pasajeros-kilómetro, Tráfico de viajeros
     tablas_relacionadas: cnmc_trimestral, fact_mercado_trimestral
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [volumenes_no_negativos, filas_minimas]
+    terminos_relacionados: [Viajeros (Pax), Plazas·km Ofertadas, Ocupación (Factor de Carga)]
 
   - termino: Plazas Ofertadas
     dominio: Negocio Ferroviario
@@ -37,6 +46,9 @@ terminos:
     formula: SUM(plazas_ofertadas)
     sinonimos: Capacidad, Asientos disponibles
     tablas_relacionadas: fact_viajeros, fact_mercado_trimestral, cnmc_viajeros_corredor
+    dashboards_relacionados: [mercado-corredor, demanda-ferroviaria]
+    quality_gates: [volumenes_no_negativos, filas_minimas]
+    terminos_relacionados: [Viajeros (Pax), Plazas·km Ofertadas, Ocupación (Factor de Carga)]
 
   - termino: Plazas·km Ofertadas
     dominio: Negocio Ferroviario
@@ -45,14 +57,20 @@ terminos:
     formula: SUM(plazas_ofertadas * distancia_km)
     sinonimos: Asientos-kilómetro ofertados (AKO)
     tablas_relacionadas: cnmc_trimestral, fact_mercado_trimestral
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [volumenes_no_negativos, filas_minimas]
+    terminos_relacionados: [Plazas Ofertadas, Viajeros·km, Ocupación (Factor de Carga)]
 
   - termino: Ocupación (Factor de Carga)
     dominio: Negocio Ferroviario
     tipo: Negocio
     definicion: "Porcentaje de aprovechamiento de la capacidad disponible, calculado como el cociente entre viajeros·km y plazas·km ofertadas (o viajeros entre plazas ofertadas)."
-    formula: round(100.0 * viajeros_km / plazas_km_ofertadas, 2)
+    formula: "round(100.0 * viajeros_km / plazas_km_ofertadas, 2)"
     sinonimos: Load Factor, Factor de ocupación
     tablas_relacionadas: fact_mercado_trimestral, cnmc_trimestral
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [volumenes_no_negativos, filas_minimas]
+    terminos_relacionados: [Viajeros (Pax), Plazas Ofertadas, Viajeros·km, Plazas·km Ofertadas]
 
   - termino: Tren·km
     dominio: Negocio Ferroviario
@@ -61,22 +79,31 @@ terminos:
     formula: SUM(tren_km)
     sinonimos: Trenes-kilómetro
     tablas_relacionadas: fact_mercado_trimestral, cnmc_indicadores
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [volumenes_no_negativos, filas_minimas]
+    terminos_relacionados: [Viajeros (Pax), Puntualidad Comercial]
 
   - termino: Cuota de Mercado (Market Share)
     dominio: Negocio Ferroviario
     tipo: Negocio
     definicion: "Proporción de la demanda total de viajeros capturada por un operador específico en un corredor o periodo respecto al conjunto de operadores en competencia."
-    formula: round(100.0 * viajeros_operador / total_viajeros_corredor, 2)
+    formula: "round(100.0 * viajeros_operador / total_viajeros_corredor, 2)"
     sinonimos: Cuota, Participación de mercado
     tablas_relacionadas: fact_mercado_trimestral, mercado_trimestral
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [cuota_maxima, filas_minimas, grano_unico]
+    terminos_relacionados: [Viajeros (Pax), Corredor Ferroviario, Servicios Comerciales Liberalizados]
 
   - termino: Puntualidad Comercial
     dominio: Negocio Ferroviario
     tipo: Negocio
     definicion: "Porcentaje de servicios ferroviarios que llegan a destino o estación intermedia dentro del margen de tolerancia de retraso establecido (en alta velocidad habitualmente < 5 minutos)."
-    formula: round(100.0 * COUNT(CASE WHEN retraso_minutos <= 5 THEN 1 END) / COUNT(*), 2)
+    formula: "round(100.0 * COUNT(CASE WHEN retraso_minutos <= 5 THEN 1 END) / COUNT(*), 2)"
     sinonimos: On-Time Performance (OTP), Índice de puntualidad
     tablas_relacionadas: fact_puntualidad, puntualidad_servicios
+    dashboards_relacionados: [puntualidad]
+    quality_gates: [retraso_no_negativo, realizado_con_retraso, cancelado_sin_retraso]
+    terminos_relacionados: [Retraso Medio, Tasa de Cancelación]
 
   - termino: Retraso Medio
     dominio: Negocio Ferroviario
@@ -85,14 +112,20 @@ terminos:
     formula: AVG(retraso_minutos)
     sinonimos: Demora media, Delay
     tablas_relacionadas: fact_puntualidad, puntualidad_servicios
+    dashboards_relacionados: [puntualidad]
+    quality_gates: [retraso_no_negativo, realizado_con_retraso]
+    terminos_relacionados: [Puntualidad Comercial, Tasa de Cancelación]
 
   - termino: Tasa de Cancelación
     dominio: Negocio Ferroviario
     tipo: Negocio
     definicion: "Porcentaje de circulaciones programadas que fueron suprimidas o canceladas sin prestar el servicio a los viajeros."
-    formula: round(100.0 * COUNT(CASE WHEN estado_servicio = 'cancelado' THEN 1 END) / COUNT(*), 2)
+    formula: "round(100.0 * COUNT(CASE WHEN estado_servicio = 'cancelado' THEN 1 END) / COUNT(*), 2)"
     sinonimos: Servicios cancelados
     tablas_relacionadas: fact_puntualidad, puntualidad_servicios
+    dashboards_relacionados: [puntualidad]
+    quality_gates: [estado_valido, cancelado_sin_retraso]
+    terminos_relacionados: [Puntualidad Comercial, Retraso Medio]
 
   - termino: Obligación de Servicio Público (OSP)
     dominio: Negocio Ferroviario
@@ -101,6 +134,9 @@ terminos:
     formula: null
     sinonimos: OSP, Servicio público regulado
     tablas_relacionadas: cnmc_indicadores, cnmc_viajeros_producto
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [empresas_conocidas, filas_minimas]
+    terminos_relacionados: [Servicios Comerciales Liberalizados]
 
   - termino: Servicios Comerciales Liberalizados
     dominio: Negocio Ferroviario
@@ -109,6 +145,9 @@ terminos:
     formula: null
     sinonimos: Servicios liberalizados, Larga Distancia AV
     tablas_relacionadas: fact_mercado_trimestral, dim_operador
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [corredor_madrid_barcelona_presente, operadores_en_viajeros]
+    terminos_relacionados: [Obligación de Servicio Público (OSP), Cuota de Mercado (Market Share), Corredor Ferroviario]
 
   - termino: Precio Medio por Trayecto
     dominio: Negocio Ferroviario
@@ -117,6 +156,9 @@ terminos:
     formula: AVG(precio_eur)
     sinonimos: Tarifa media, Average Fare
     tablas_relacionadas: fact_precio_mensual, fact_precio_trimestral
+    dashboards_relacionados: [mercado-corredor]
+    quality_gates: [precio_positivo, filas_minimas]
+    terminos_relacionados: [Viajeros (Pax), Cuota de Mercado (Market Share)]
 
   # ==============================================================================================
   # DOMINIO: Plataforma Data Lakehouse y Calidad
@@ -128,6 +170,9 @@ terminos:
     formula: null
     sinonimos: Capas Bronze/Silver/Gold
     tablas_relacionadas: _trazabilidad/cargas, lineage_nodos
+    dashboards_relacionados: [lineage-cargas, catalogo-datos-glosario]
+    quality_gates: [filas_minimas, grano_unico]
+    terminos_relacionados: [Capa Bronze L1 (Raw), Capa Bronze L2 (Parquet), Capa Silver, Capa Gold]
 
   - termino: Capa Bronze L1 (Raw)
     dominio: Plataforma Data Lakehouse
@@ -136,6 +181,9 @@ terminos:
     formula: null
     sinonimos: L1, Bronze Raw
     tablas_relacionadas: _trazabilidad/cargas
+    dashboards_relacionados: [lineage-cargas, trazabilidad-cargas, catalogo-datos-glosario]
+    quality_gates: [carga_correcta]
+    terminos_relacionados: [Arquitectura Medallion, Capa Bronze L2 (Parquet), Trazabilidad de Cargas]
 
   - termino: Capa Bronze L2 (Parquet)
     dominio: Plataforma Data Lakehouse
@@ -144,6 +192,9 @@ terminos:
     formula: null
     sinonimos: L2, Bronze Parquet
     tablas_relacionadas: _trazabilidad/cargas
+    dashboards_relacionados: [lineage-cargas, trazabilidad-cargas, catalogo-datos-glosario]
+    quality_gates: [carga_correcta]
+    terminos_relacionados: [Arquitectura Medallion, Capa Bronze L1 (Raw), Capa Silver]
 
   - termino: Capa Silver
     dominio: Plataforma Data Lakehouse
@@ -152,6 +203,9 @@ terminos:
     formula: null
     sinonimos: Silver, Curated Zone
     tablas_relacionadas: silver_cnmc_trimestral, silver_viajeros_enriquecidos
+    dashboards_relacionados: [lineage-cargas, trazabilidad-cargas, catalogo-datos-glosario]
+    quality_gates: [claves_sin_nulos, grano_unico, filas_minimas]
+    terminos_relacionados: [Arquitectura Medallion, Capa Gold, Quality Gate (Control de Calidad)]
 
   - termino: Capa Gold
     dominio: Plataforma Data Lakehouse
@@ -160,6 +214,9 @@ terminos:
     formula: null
     sinonimos: Gold, Data Marts
     tablas_relacionadas: dim_fecha, dim_estacion, fact_viajeros, fact_mercado_trimestral
+    dashboards_relacionados: [lineage-cargas, trazabilidad-cargas, catalogo-datos-glosario]
+    quality_gates: [filas_minimas, grano_unico, no_nulos_claves]
+    terminos_relacionados: [Arquitectura Medallion, Capa Silver, Grano de Datos (Granularidad), DuckDB]
 
   - termino: Quality Gate (Control de Calidad)
     dominio: Plataforma Data Lakehouse
@@ -168,6 +225,9 @@ terminos:
     formula: null
     sinonimos: Gate, Data Quality Check
     tablas_relacionadas: config/quality_gates.yml, _trazabilidad/calidad
+    dashboards_relacionados: [trazabilidad-cargas, lineage-cargas, catalogo-datos-glosario]
+    quality_gates: [filas_minimas, claves_sin_nulos, grano_unico]
+    terminos_relacionados: [Quality Gate Bloqueante, Quality Gate Aviso, Capa Silver, Capa Gold]
 
   - termino: Quality Gate Bloqueante
     dominio: Plataforma Data Lakehouse
@@ -176,6 +236,9 @@ terminos:
     formula: null
     sinonimos: Gate crítico, Fail-closed
     tablas_relacionadas: config/quality_gates.yml, _trazabilidad/calidad
+    dashboards_relacionados: [trazabilidad-cargas, lineage-cargas]
+    quality_gates: [claves_sin_nulos, grano_unico, viajeros_no_negativos]
+    terminos_relacionados: [Quality Gate (Control de Calidad), Quality Gate Aviso]
 
   - termino: Quality Gate Aviso
     dominio: Plataforma Data Lakehouse
@@ -184,6 +247,9 @@ terminos:
     formula: null
     sinonimos: Warning gate
     tablas_relacionadas: config/quality_gates.yml, _trazabilidad/calidad
+    dashboards_relacionados: [trazabilidad-cargas, lineage-cargas]
+    quality_gates: [atributos_estacion_sin_nulos, atributos_linea_sin_nulos, festivo_con_nombre]
+    terminos_relacionados: [Quality Gate (Control de Calidad), Quality Gate Bloqueante]
 
   - termino: Trazabilidad de Cargas
     dominio: Plataforma Data Lakehouse
@@ -192,6 +258,9 @@ terminos:
     formula: null
     sinonimos: Auditoría de cargas, Load Traceability
     tablas_relacionadas: _trazabilidad/cargas, cargas
+    dashboards_relacionados: [trazabilidad-cargas, lineage-cargas]
+    quality_gates: [carga_registrada, anomalia_volumen, anomalia_duracion]
+    terminos_relacionados: [Run ID, Frescura de Datos (Freshness), Lineage de Cargas (Linaje)]
 
   - termino: Lineage de Cargas (Linaje)
     dominio: Plataforma Data Lakehouse
@@ -200,6 +269,9 @@ terminos:
     formula: null
     sinonimos: Data Lineage, Linaje de datos
     tablas_relacionadas: lineage_nodos, lineage_aristas, lineage_cargas
+    dashboards_relacionados: [lineage-cargas]
+    quality_gates: [grafo_conectado, aristas_validas]
+    terminos_relacionados: [Trazabilidad de Cargas, Arquitectura Medallion, Quality Gate (Control de Calidad)]
 
   - termino: Frescura de Datos (Freshness)
     dominio: Plataforma Data Lakehouse
@@ -208,6 +280,9 @@ terminos:
     formula: "date_diff('hour', max(fin_carga), current_timestamp)"
     sinonimos: Freshness, Latencia de datos
     tablas_relacionadas: frescura_tablas, _trazabilidad/cargas
+    dashboards_relacionados: [trazabilidad-cargas]
+    quality_gates: [serie_actualizada, freshness_maxima]
+    terminos_relacionados: [Trazabilidad de Cargas, Run ID]
 
   - termino: Run ID
     dominio: Plataforma Data Lakehouse
@@ -216,6 +291,9 @@ terminos:
     formula: null
     sinonimos: ID de ejecución, Execution Run
     tablas_relacionadas: _trazabilidad/cargas, _trazabilidad/calidad
+    dashboards_relacionados: [trazabilidad-cargas, lineage-cargas]
+    quality_gates: [run_id_unico]
+    terminos_relacionados: [Trazabilidad de Cargas, Frescura de Datos (Freshness)]
 
   - termino: Grano de Datos (Granularidad)
     dominio: Plataforma Data Lakehouse
@@ -224,6 +302,9 @@ terminos:
     formula: null
     sinonimos: Granularidad, Grain
     tablas_relacionadas: data_catalog, config/data_catalog.yml
+    dashboards_relacionados: [catalogo-datos-glosario]
+    quality_gates: [grano_unico]
+    terminos_relacionados: [Capa Gold, Capa Silver, Quality Gate (Control de Calidad)]
 
   - termino: DuckDB
     dominio: Plataforma Data Lakehouse
@@ -232,3 +313,6 @@ terminos:
     formula: null
     sinonimos: Motor SQL analítico
     tablas_relacionadas: datasets/Raillytics_Gold_DuckDB
+    dashboards_relacionados: [catalogo-datos-glosario, mercado-corredor, demanda-ferroviaria, puntualidad, trazabilidad-cargas, lineage-cargas]
+    quality_gates: []
+    terminos_relacionados: [Capa Gold, Lineage de Cargas (Linaje)]

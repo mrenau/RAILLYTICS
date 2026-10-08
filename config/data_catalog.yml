@@ -24,11 +24,11 @@ tablas:
       - {nombre: trimestre, tipo: VARCHAR, descripcion: "Código de trimestre en formato AAAA-TX (ej. 2026-T2)", es_clave: true}
       - {nombre: corredor, tipo: VARCHAR, descripcion: "Nombre normalizado del corredor ferroviario", es_clave: true}
       - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador ferroviario", es_clave: true}
-      - {nombre: viajeros, tipo: BIGINT, descripcion: "Total de viajeros transportados", es_clave: false}
-      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Total de plazas comerciales ofertadas", es_clave: false}
-      - {nombre: tren_km, tipo: DOUBLE, descripcion: "Kilómetros totales recorridos por las composiciones", es_clave: false}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Total de viajeros transportados", es_clave: false, termino_glosario: "Viajeros (Pax)"}
+      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Total de plazas comerciales ofertadas", es_clave: false, termino_glosario: "Plazas Ofertadas"}
+      - {nombre: tren_km, tipo: DOUBLE, descripcion: "Kilómetros totales recorridos por las composiciones", es_clave: false, termino_glosario: "Tren·km"}
       - {nombre: ingresos_eur, tipo: DOUBLE, descripcion: "Ingresos comerciales brutos por venta de billetes", es_clave: false}
-      - {nombre: cuota_viajeros_pct, tipo: DOUBLE, descripcion: "Porcentaje de cuota de mercado en volumen de viajeros", es_clave: false}
+      - {nombre: cuota_viajeros_pct, tipo: DOUBLE, descripcion: "Porcentaje de cuota de mercado en volumen de viajeros", es_clave: false, termino_glosario: "Cuota de Mercado (Market Share)"}
 
   - tabla: fact_viajeros
     nombre: Hecho de Viajeros Diarios
@@ -50,8 +50,8 @@ tablas:
       - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador comercial", es_clave: true}
       - {nombre: estacion_origen_id, tipo: VARCHAR, descripcion: "Identificador de la estación de salida", es_clave: true}
       - {nombre: estacion_destino_id, tipo: VARCHAR, descripcion: "Identificador de la estación de llegada", es_clave: true}
-      - {nombre: viajeros, tipo: BIGINT, descripcion: "Número de pasajeros transportados", es_clave: false}
-      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Capacidad de plazas comercializadas", es_clave: false}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Número de pasajeros transportados", es_clave: false, termino_glosario: "Viajeros (Pax)"}
+      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Capacidad de plazas comercializadas", es_clave: false, termino_glosario: "Plazas Ofertadas"}
 
   - tabla: fact_puntualidad
     nombre: Hecho de Puntualidad de Servicios
@@ -72,8 +72,8 @@ tablas:
       - {nombre: servicio_id, tipo: VARCHAR, descripcion: "Código identificador único de la circulación", es_clave: true}
       - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador ferroviario", es_clave: false}
       - {nombre: linea_id, tipo: VARCHAR, descripcion: "Identificador de la línea recorrida", es_clave: false}
-      - {nombre: retraso_minutos, tipo: DOUBLE, descripcion: "Minutos de desviación respecto al horario oficial", es_clave: false}
-      - {nombre: estado_servicio, tipo: VARCHAR, descripcion: "Estado ('puntual', 'retrasado', 'cancelado')", es_clave: false}
+      - {nombre: retraso_minutos, tipo: DOUBLE, descripcion: "Minutos de desviación respecto al horario oficial", es_clave: false, termino_glosario: "Retraso Medio"}
+      - {nombre: estado_servicio, tipo: VARCHAR, descripcion: "Estado ('puntual', 'retrasado', 'cancelado')", es_clave: false, termino_glosario: "Puntualidad Comercial"}
 
   - tabla: fact_precio_mensual
     nombre: Hecho de Precios Medios Mensuales
@@ -93,7 +93,7 @@ tablas:
       - {nombre: mes, tipo: VARCHAR, descripcion: "Año y mes en formato AAAA-MM (ej. 2026-06)", es_clave: true}
       - {nombre: trayecto, tipo: VARCHAR, descripcion: "Relación origen-destino analizada", es_clave: true}
       - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador ferroviario", es_clave: true}
-      - {nombre: precio_medio_eur, tipo: DOUBLE, descripcion: "Precio medio ponderado del billete en euros", es_clave: false}
+      - {nombre: precio_medio_eur, tipo: DOUBLE, descripcion: "Precio medio ponderado del billete en euros", es_clave: false, termino_glosario: "Precio Medio por Trayecto"}
 
   - tabla: fact_precio_trimestral
     nombre: Hecho de Precios Medios Trimestrales
@@ -113,7 +113,7 @@ tablas:
       - {nombre: trimestre, tipo: VARCHAR, descripcion: "Trimestre en formato AAAA-TX", es_clave: true}
       - {nombre: trayecto, tipo: VARCHAR, descripcion: "Trayecto comercial analizado", es_clave: true}
       - {nombre: operador_id, tipo: VARCHAR, descripcion: "Identificador del operador", es_clave: true}
-      - {nombre: precio_medio_eur, tipo: DOUBLE, descripcion: "Precio medio del billete en euros", es_clave: false}
+      - {nombre: precio_medio_eur, tipo: DOUBLE, descripcion: "Precio medio del billete en euros", es_clave: false, termino_glosario: "Precio Medio por Trayecto"}
 
   - tabla: fact_prediccion_demanda
     nombre: Hecho de Predicciones de Demanda LLM
@@ -248,8 +248,8 @@ tablas:
       - {nombre: corredor, tipo: VARCHAR, descripcion: "Nombre del corredor", es_clave: true}
       - {nombre: empresa, tipo: VARCHAR, descripcion: "Empresa operadora", es_clave: true}
       - {nombre: servicio, tipo: VARCHAR, descripcion: "Tipo de servicio prestado", es_clave: true}
-      - {nombre: viajeros, tipo: BIGINT, descripcion: "Viajeros transportados", es_clave: false}
-      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Plazas comercializadas", es_clave: false}
+      - {nombre: viajeros, tipo: BIGINT, descripcion: "Viajeros transportados", es_clave: false, termino_glosario: "Viajeros (Pax)"}
+      - {nombre: plazas_ofertadas, tipo: BIGINT, descripcion: "Plazas comercializadas", es_clave: false, termino_glosario: "Plazas Ofertadas"}
       - {nombre: ingresos_billetes_eur, tipo: DOUBLE, descripcion: "Ingresos por billetes en euros", es_clave: false}
 
   - tabla: cnmc_precio_mensual
@@ -445,11 +445,11 @@ tablas:
     upstream: [todos_los_procesos]
     downstream: [dashboard:trazabilidad-cargas, dashboard:lineage-cargas]
     columnas:
-      - {nombre: run_id, tipo: VARCHAR, descripcion: "ID único de ejecución", es_clave: true}
+      - {nombre: run_id, tipo: VARCHAR, descripcion: "ID único de ejecución", es_clave: true, termino_glosario: "Run ID"}
       - {nombre: proceso, tipo: VARCHAR, descripcion: "Nombre del componente técnico", es_clave: false}
       - {nombre: tabla, tipo: VARCHAR, descripcion: "Tabla escrita", es_clave: true}
       - {nombre: filas, tipo: BIGINT, descripcion: "Número de registros producidos", es_clave: false}
-      - {nombre: duracion_s, tipo: DOUBLE, descripcion: "Segundos empleados", es_clave: false}
+      - {nombre: duracion_s, tipo: DOUBLE, descripcion: "Segundos empleados", es_clave: false, termino_glosario: "Trazabilidad de Cargas"}
       - {nombre: estado, tipo: VARCHAR, descripcion: "'ok' o 'error'", es_clave: false}
 
   - tabla: calidad
@@ -467,8 +467,8 @@ tablas:
     upstream: [todos_los_procesos]
     downstream: [dashboard:trazabilidad-cargas, dashboard:lineage-cargas]
     columnas:
-      - {nombre: run_id, tipo: VARCHAR, descripcion: "ID único de ejecución", es_clave: true}
+      - {nombre: run_id, tipo: VARCHAR, descripcion: "ID único de ejecución", es_clave: true, termino_glosario: "Run ID"}
       - {nombre: tabla, tipo: VARCHAR, descripcion: "Tabla evaluada", es_clave: true}
-      - {nombre: gate, tipo: VARCHAR, descripcion: "Nombre de la regla", es_clave: true}
+      - {nombre: gate, tipo: VARCHAR, descripcion: "Nombre de la regla", es_clave: true, termino_glosario: "Quality Gate (Control de Calidad)"}
       - {nombre: resultado, tipo: VARCHAR, descripcion: "'ok' o 'fallo'", es_clave: false}
-      - {nombre: severidad, tipo: VARCHAR, descripcion: "'bloqueante' o 'aviso'", es_clave: false}
+      - {nombre: severidad, tipo: VARCHAR, descripcion: "'bloqueante' o 'aviso'", es_clave: false, termino_glosario: "Quality Gate Bloqueante"}

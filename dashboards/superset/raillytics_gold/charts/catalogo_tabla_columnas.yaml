@@ -26,6 +26,7 @@ params:
   - columna
   - tipo
   - es_clave
+  - termino_glosario
   - descripcion
   order_by_cols:
   - '["tabla", true]'

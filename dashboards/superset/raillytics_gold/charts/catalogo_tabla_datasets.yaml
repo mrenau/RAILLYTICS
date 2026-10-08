@@ -33,6 +33,7 @@ params:
   - quality_gates
   - upstream
   - downstream
+  - terminos_glosario
   - n_columnas
   - descripcion
   order_by_cols:

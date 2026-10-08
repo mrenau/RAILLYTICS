@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -13,6 +14,7 @@ class ColumnaInfo:
     tipo: str
     descripcion: str = ""
     es_clave: bool = False
+    termino_glosario: str | None = None
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,7 @@ class TablaInfo:
     upstream: list[str] = field(default_factory=list)
     downstream: list[str] = field(default_factory=list)
     columnas: list[ColumnaInfo] = field(default_factory=list)
+    terminos_glosario: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -43,12 +46,23 @@ class TerminoInfo:
     formula: str | None = None
     sinonimos: str = ""
     tablas_relacionadas: str = ""
+    dashboards_relacionados: list[str] = field(default_factory=list)
+    quality_gates: list[str] = field(default_factory=list)
+    terminos_relacionados: list[str] = field(default_factory=list)
 
 
 @dataclass
 class CatalogoGlosario:
     tablas: list[TablaInfo] = field(default_factory=list)
     terminos: list[TerminoInfo] = field(default_factory=list)
+
+
+def _como_lista(valor: Any) -> list[str]:
+    if not valor:
+        return []
+    if isinstance(valor, list):
+        return [str(v).strip() for v in valor if str(v).strip()]
+    return [p.strip() for p in str(valor).split(",") if p.strip()]
 
 
 def _resolver_nodo_id(tabla: str, capa: str) -> str | None:
@@ -77,6 +91,25 @@ def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
     except Exception:
         pass
 
+    terminos: list[TerminoInfo] = []
+    if ruta_glo.is_file():
+        datos_glo = yaml.safe_load(ruta_glo.read_text(encoding="utf-8")) or {}
+        for item in datos_glo.get("terminos", []):
+            terminos.append(
+                TerminoInfo(
+                    termino=item["termino"],
+                    dominio=item.get("dominio", "General"),
+                    tipo=item.get("tipo", "Negocio"),
+                    definicion=item.get("definicion", ""),
+                    formula=item.get("formula"),
+                    sinonimos=item.get("sinonimos") or "",
+                    tablas_relacionadas=item.get("tablas_relacionadas") or "",
+                    dashboards_relacionados=_como_lista(item.get("dashboards_relacionados")),
+                    quality_gates=_como_lista(item.get("quality_gates")),
+                    terminos_relacionados=_como_lista(item.get("terminos_relacionados")),
+                )
+            )
+
     tablas: list[TablaInfo] = []
     if ruta_cat.is_file():
         datos_cat = yaml.safe_load(ruta_cat.read_text(encoding="utf-8")) or {}
@@ -87,6 +120,7 @@ def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
                     tipo=c.get("tipo", "VARCHAR"),
                     descripcion=c.get("descripcion", ""),
                     es_clave=c.get("es_clave", False),
+                    termino_glosario=c.get("termino_glosario"),
                 )
                 for c in t.get("columnas", [])
             ]
@@ -100,6 +134,15 @@ def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
             upstream = t.get("upstream") or up_auto
             downstream = t.get("downstream") or down_auto
             quality_gates = t.get("quality_gates") or gates_auto
+
+            # Auto-enriquecimiento de términos del glosario asociados a la tabla
+            term_de_tabla = [
+                term.termino for term in terminos
+                if t["tabla"] in _como_lista(term.tablas_relacionadas)
+            ]
+            term_de_cols = [c.termino_glosario for c in cols if c.termino_glosario]
+            term_explicitos = _como_lista(t.get("terminos_glosario"))
+            terminos_glosario = sorted(set(term_de_tabla + term_de_cols + term_explicitos))
 
             tablas.append(
                 TablaInfo(
@@ -118,22 +161,7 @@ def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
                     upstream=upstream,
                     downstream=downstream,
                     columnas=cols,
-                )
-            )
-
-    terminos: list[TerminoInfo] = []
-    if ruta_glo.is_file():
-        datos_glo = yaml.safe_load(ruta_glo.read_text(encoding="utf-8")) or {}
-        for item in datos_glo.get("terminos", []):
-            terminos.append(
-                TerminoInfo(
-                    termino=item["termino"],
-                    dominio=item.get("dominio", "General"),
-                    tipo=item.get("tipo", "Negocio"),
-                    definicion=item.get("definicion", ""),
-                    formula=item.get("formula"),
-                    sinonimos=item.get("sinonimos") or "",
-                    tablas_relacionadas=item.get("tablas_relacionadas") or "",
+                    terminos_glosario=terminos_glosario,
                 )
             )
 

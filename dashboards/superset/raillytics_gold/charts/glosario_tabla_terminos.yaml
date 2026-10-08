@@ -28,6 +28,9 @@ params:
   - formula
   - sinonimos
   - tablas_relacionadas
+  - dashboards_relacionados
+  - quality_gates
+  - terminos_relacionados
   order_by_cols:
   - '["dominio", true]'
   - '["termino", true]'
