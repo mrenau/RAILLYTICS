@@ -354,7 +354,7 @@ sql: |-
       ('cargas', 'Dashboard: trazabilidad-cargas', 'alimenta', 'Capa Metadatos', 'Dashboard', 3),
       ('cargas', 'Dashboard: lineage-cargas', 'alimenta', 'Capa Metadatos', 'Dashboard', 3)
   )
-  SELECT * FROM relaciones ORDER BY categoria_origen, origen
+  SELECT origen AS termino, origen, destino, relacion, categoria_origen, categoria_destino, peso FROM relaciones ORDER BY categoria_origen, origen
 params: null
 template_params: null
 filter_select_enabled: true
@@ -381,6 +381,18 @@ metrics:
   extra: null
   warning_text: null
 columns:
+- column_name: termino
+  verbose_name: Término
+  is_dttm: false
+  is_active: true
+  type: VARCHAR
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  extra: null
 - column_name: origen
   verbose_name: Origen
   is_dttm: false

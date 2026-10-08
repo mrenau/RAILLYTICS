@@ -224,7 +224,7 @@ def sql_catalogo_relaciones(cat: CatalogoGlosario) -> str:
 WITH relaciones(origen, destino, relacion, categoria_origen, categoria_destino, peso) AS (VALUES
     {_values(filas_unicas)}
 )
-SELECT * FROM relaciones ORDER BY categoria_origen, origen"""
+SELECT origen AS termino, origen, destino, relacion, categoria_origen, categoria_destino, peso FROM relaciones ORDER BY categoria_origen, origen"""
 
 
 def construir_datasets_catalogo(cat: CatalogoGlosario) -> dict[str, dict]:
@@ -269,6 +269,7 @@ def construir_datasets_catalogo(cat: CatalogoGlosario) -> dict[str, dict]:
         _col("terminos_relacionados", "Términos relacionados"),
     ]
     cols_relaciones = [
+        _col("termino", "Término"),
         _col("origen", "Origen"),
         _col("destino", "Destino"),
         _col("relacion", "Relación"),

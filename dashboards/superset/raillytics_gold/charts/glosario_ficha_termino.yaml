@@ -1,0 +1,55 @@
+slice_name: Ficha del concepto (definición, fórmula y gobernanza)
+description: 'Ficha detallada del concepto de gobernanza: muestra la definición oficial, fórmula de cálculo, reglas de calidad y enlaces interactivos al catálogo y dashboards.'
+certified_by: null
+certification_details: null
+viz_type: table
+params:
+  viz_type: table
+  query_mode: raw
+  groupby: []
+  metrics: []
+  percent_metrics: []
+  row_limit: 1000
+  server_page_length: 5
+  include_search: true
+  show_totals: false
+  table_timestamp_format: '%Y-%m-%d %H:%M:%S'
+  show_cell_bars: false
+  color_pn: false
+  column_config: {}
+  temporal_columns_lookup: {}
+  time_grain_sqla: null
+  adhoc_filters: []
+  all_columns:
+  - termino
+  - tipo
+  - dominio
+  - definicion
+  - formula
+  - sinonimos
+  - tablas_relacionadas
+  - quality_gates
+  - dashboards_relacionados
+  - terminos_relacionados
+  order_by_cols:
+  - '["termino", true]'
+  allow_render_html: true
+  emit_filter: true
+  conditional_formatting:
+  - column: tipo
+    operator: ==
+    targetValue: Negocio
+    colorScheme: '#ACE1C4'
+  - column: tipo
+    operator: ==
+    targetValue: Técnico
+    colorScheme: '#FDE380'
+  extra_form_data: {}
+  dashboards: []
+query_context: null
+cache_timeout: null
+uuid: 10000001-caca-5000-8000-000000000013
+version: 1.0.0
+dataset_uuid: 57fdcb35-8bd9-55e7-be70-d82e930b3e1c
+is_managed_externally: false
+external_url: null

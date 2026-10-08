@@ -6,7 +6,7 @@ viz_type: graph_chart
 params:
   viz_type: graph_chart
   adhoc_filters: []
-  source: origen
+  source: termino
   target: destino
   metric: peso_total
   source_category: categoria_origen
@@ -29,6 +29,7 @@ params:
   legendType: scroll
   legendOrientation: top
   legendMargin: 5
+  emit_filter: true
   extra_form_data: {}
   dashboards: []
 query_context: null

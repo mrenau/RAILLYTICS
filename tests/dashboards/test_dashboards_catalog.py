@@ -18,6 +18,7 @@ ESPERADOS = {
     "glosario_kpi_tecnicos",
     "glosario_tabla_terminos",
     "catalogo_grafo_gobernanza",
+    "glosario_ficha_termino",
 }
 
 
@@ -30,7 +31,7 @@ def _columnas_usadas(grafico):
     return columnas
 
 
-def test_el_dashboard_tiene_sus_doce_graficos_y_usan_datasets_de_catalogo():
+def test_el_dashboard_tiene_sus_trece_graficos_y_usan_datasets_de_catalogo():
     graficos = _graficos_de("catalogo_glosario")
 
     assert set(graficos) == ESPERADOS
@@ -54,8 +55,8 @@ def test_los_filtros_nativos_apuntan_a_columnas_reales():
 
     assert set(filtros) == {"Capa", "Dominio (Catálogo)", "Dominio (Glosario)", "Tipo de término", "Tabla", "Término de glosario"}
     for nombre, filtro in filtros.items():
-        destino = filtro["targets"][0]
-        assert destino["column"]["name"] in {c["column_name"] for c in por_uuid[destino["datasetUuid"]]["columns"]}, nombre
+        for destino in filtro["targets"]:
+            assert destino["column"]["name"] in {c["column_name"] for c in por_uuid[destino["datasetUuid"]]["columns"]}, nombre
 
 
 def test_el_dashboard_se_describe_y_tiene_su_slug():
