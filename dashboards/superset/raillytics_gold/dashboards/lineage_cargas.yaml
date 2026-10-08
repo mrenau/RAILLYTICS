@@ -222,7 +222,7 @@ position:
       height: 120
       chartId: 106
       uuid: 4f92b4a1-8a10-5ccc-ab24-f9f213734b16
-      sliceName: Mapa de lineage (arrastra los nodos, rueda para ampliar)
+      sliceName: Mapa de lineage (física interactiva · rueda para zoom)
   ROW-grafo:
     type: ROW
     id: ROW-grafo
