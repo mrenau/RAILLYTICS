@@ -34,8 +34,8 @@ sql: |-
   con_stats AS (
       SELECT
           *,
-          round(avg(filas) OVER (PARTITION BY coalesce(tabla, proceso)), 0) AS media_filas,
-          round(avg(duracion_s) OVER (PARTITION BY coalesce(tabla, proceso)), 1) AS media_duracion
+          round(avg(filas) FILTER (WHERE estado = 'ok' AND filas IS NOT NULL) OVER (PARTITION BY coalesce(tabla, proceso)), 0) AS media_filas,
+          round(avg(duracion_s) FILTER (WHERE estado = 'ok' AND duracion_s IS NOT NULL) OVER (PARTITION BY coalesce(tabla, proceso)), 1) AS media_duracion
       FROM base
   )
   SELECT

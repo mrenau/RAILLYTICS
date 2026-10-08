@@ -26,6 +26,8 @@ def test_sql_cargas_calcula_estadisticas_y_detecta_anomalias(tmp_path):
         ("r4", "gold_build", "gold", "dim_fecha", "s", "d", 5, 10, "2026-10-04 10:00:00", "2026-10-04 10:00:02", 2.0, "ok", None, None, "cli", "h", "u"),
         # Carga con anomalía de duración: tarda 15s (> 3x de 2s)
         ("r5", "gold_build", "gold", "dim_fecha", "s", "d", 365, 100, "2026-10-05 10:00:00", "2026-10-05 10:00:15", 15.0, "ok", None, None, "cli", "h", "u"),
+        # Carga fallida con 0 filas: no debe ensuciar la media histórica
+        ("r6", "gold_build", "gold", "dim_fecha", "s", "d", 0, 0, "2026-10-06 10:00:00", "2026-10-06 10:00:01", 1.0, "error", "fallo de red", None, "cli", "h", "u"),
     ]
 
     def _val(err):
@@ -49,7 +51,7 @@ def test_sql_cargas_calcula_estadisticas_y_detecta_anomalias(tmp_path):
         f"SELECT run_id, filas, media_filas, desviacion_filas_pct, anomalia_volumen, duracion_s, media_duracion, anomalia_duracion FROM ({sql}) t ORDER BY run_id"
     ).fetchall()
 
-    assert len(resultado) == 5
+    assert len(resultado) == 6
     por_run = {r[0]: r for r in resultado}
 
     # r1..r3 son normales
@@ -62,6 +64,9 @@ def test_sql_cargas_calcula_estadisticas_y_detecta_anomalias(tmp_path):
     # r5 tiene duración anormalmente lenta
     assert por_run["r5"][7] == "lenta"
     assert por_run["r5"][5] == 15.0
+
+    # r6 falló: su media_filas no incluye el 0
+    assert por_run["r6"][2] > 200.0  # media_filas calculada solo con cargas ok
 
 
 def test_metricas_de_anomalias_en_cargas_estan_declaradas():

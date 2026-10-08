@@ -10,7 +10,7 @@
 #       make <target>
 
 .DEFAULT_GOAL := help
-.PHONY: help up down install-dev-env install-hooks test test-python test-scala 00_ingest 01_raw-uploader 02_parquet-converter 03_silver-sample 04_silver 05_gold 06_superset-import 07_prediccion prediccion-sample llm-up llm-down quality-gates carga-e2e lineage catalog cargas calidad clean
+.PHONY: help up down install-dev-env install-hooks test test-python test-scala 00_ingest 01_raw-uploader 02_parquet-converter 03_silver-sample 04_silver 05_gold 06_superset-import 07_prediccion prediccion-sample llm-up llm-down quality-gates carga-e2e lineage catalog metadata cargas calidad clean
 
 # .env está en formato KEY=value, que es sintaxis de Makefile válida — así no
 # hace falta `source .env` (no funciona igual en Windows) y las variables se
@@ -217,6 +217,8 @@ lineage: $(VENV)/.deps-installed
 
 catalog: $(VENV)/.deps-installed
 	$(VENV_PY) -m raillytics.catalog
+
+metadata: lineage catalog
 
 cargas: $(VENV)/.deps-installed
 	$(VENV_PY) -m raillytics.utils.cargas

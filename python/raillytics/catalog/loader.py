@@ -1,4 +1,4 @@
-"""Carga y validación del Catálogo de Datos y Glosario de Términos."""
+"""Carga y validación del Catálogo de Datos y Glosario de Términos con auto-enriquecimiento desde el Grafo."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -51,9 +51,31 @@ class CatalogoGlosario:
     terminos: list[TerminoInfo] = field(default_factory=list)
 
 
+def _resolver_nodo_id(tabla: str, capa: str) -> str | None:
+    if capa == "Gold":
+        return f"gold:{tabla}"
+    if capa == "Silver":
+        return f"silver:{tabla}"
+    if capa == "Bronze L2":
+        return f"l2:{tabla}"
+    if capa == "Bronze L1":
+        return f"l1:{tabla}"
+    if capa == "Predicción":
+        return f"pred:{tabla}"
+    return None
+
+
 def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
     ruta_cat = raiz / "config" / "data_catalog.yml"
     ruta_glo = raiz / "config" / "glosario.yml"
+
+    # Auto-enriquecimiento de dependencias (upstream/downstream) y quality gates desde el grafo
+    grafo = None
+    try:
+        from raillytics.lineage.grafo import construir
+        grafo = construir(raiz)
+    except Exception:
+        pass
 
     tablas: list[TablaInfo] = []
     if ruta_cat.is_file():
@@ -68,11 +90,22 @@ def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
                 )
                 for c in t.get("columnas", [])
             ]
+
+            capa = t.get("capa", "Gold")
+            nodo_id = _resolver_nodo_id(t["tabla"], capa)
+            up_auto = sorted({a.origen for a in grafo.aristas if a.destino == nodo_id}) if (grafo and nodo_id) else []
+            down_auto = sorted({a.destino for a in grafo.aristas if a.origen == nodo_id}) if (grafo and nodo_id) else []
+            gates_auto = sorted({r.gate for r in grafo.reglas if r.nodo == nodo_id}) if (grafo and nodo_id) else []
+
+            upstream = t.get("upstream") or up_auto
+            downstream = t.get("downstream") or down_auto
+            quality_gates = t.get("quality_gates") or gates_auto
+
             tablas.append(
                 TablaInfo(
                     tabla=t["tabla"],
                     nombre=t.get("nombre", t["tabla"]),
-                    capa=t.get("capa", "Gold"),
+                    capa=capa,
                     orden_capa=int(t.get("orden_capa", 6)),
                     dominio=t.get("dominio", "General"),
                     descripcion=t.get("descripcion", ""),
@@ -81,9 +114,9 @@ def cargar_catalogo_y_glosario(raiz: Path) -> CatalogoGlosario:
                     formato=t.get("formato", "Parquet"),
                     proceso=t.get("proceso", ""),
                     frecuencia=t.get("frecuencia", ""),
-                    quality_gates=t.get("quality_gates", []),
-                    upstream=t.get("upstream", []),
-                    downstream=t.get("downstream", []),
+                    quality_gates=quality_gates,
+                    upstream=upstream,
+                    downstream=downstream,
                     columnas=cols,
                 )
             )
